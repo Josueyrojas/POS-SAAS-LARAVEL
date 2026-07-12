@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Pos;
 
+use App\Enums\CashSessionStatus;
+use App\Enums\DiscountType;
 use App\Enums\PaymentMethod;
 use App\Enums\SaleStatus;
 use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
+use App\Models\CashSession;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
@@ -65,10 +68,12 @@ class SaleController extends Controller
     }
 
     /**
-     * Registra la venta. Todo el precio (menudeo/mayoreo) y el descuento de
-     * stock se recalculan server-side dentro de una transacción — nunca se
-     * confía en lo que mandó el carrito del cliente. Si falta stock de
-     * cualquier línea, se revierte toda la venta (no hay venta parcial).
+     * Registra la venta. Todo el precio (menudeo/mayoreo, descuento, IVA) y
+     * el descuento de stock se recalculan server-side dentro de una
+     * transacción — nunca se confía en lo que mandó el carrito del cliente.
+     * Si falta stock de cualquier línea, se revierte toda la venta (no hay
+     * venta parcial). Requiere un turno de caja abierto (lo exige el
+     * middleware `cash.session` en la ruta).
      */
     public function store(Request $request)
     {
@@ -76,12 +81,27 @@ class SaleController extends Controller
             'customer_id' => ['nullable', 'uuid', 'exists:customers,id'],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
             'amount_tendered' => ['nullable', 'numeric', 'min:0'],
+            'discount_type' => ['nullable', Rule::enum(DiscountType::class)],
+            'discount_value' => ['nullable', 'required_with:discount_type', 'numeric', 'min:0'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'uuid'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
         ]);
 
-        $sale = DB::transaction(function () use ($data) {
+        if (($data['discount_type'] ?? null) === DiscountType::PERCENT->value && ($data['discount_value'] ?? 0) > 100) {
+            abort(422, 'El descuento porcentual no puede ser mayor a 100%.');
+        }
+
+        $cashSession = CashSession::where('user_id', Auth::id())
+            ->where('status', CashSessionStatus::OPEN->value)
+            ->first();
+        if (! $cashSession) {
+            abort(422, 'No tienes un turno de caja abierto.');
+        }
+
+        $taxRate = (float) (Auth::user()->business->tax_rate ?? 0);
+
+        $sale = DB::transaction(function () use ($data, $cashSession, $taxRate) {
             // Bloqueo ordenado por id: evita deadlocks si dos cajeros venden
             // simultáneamente productos que se solapan.
             $productIds = collect($data['items'])->pluck('product_id')->unique()->sort()->values();
@@ -100,12 +120,13 @@ class SaleController extends Controller
             $sale = Sale::create([
                 'seller_id' => Auth::id(),
                 'customer_id' => $data['customer_id'] ?? null,
+                'cash_session_id' => $cashSession->id,
                 'status' => SaleStatus::COMPLETED,
                 'payment_method' => $data['payment_method'],
                 'total' => 0,
             ]);
 
-            $total = 0;
+            $itemsSubtotal = 0;
             foreach ($data['items'] as $item) {
                 $product = $products[$item['product_id']];
                 $quantity = (float) $item['quantity'];
@@ -119,7 +140,7 @@ class SaleController extends Controller
 
                 [$unitPrice, $priceType] = $product->priceFor($quantity);
                 $lineTotal = round($unitPrice * $quantity, 2);
-                $total += $lineTotal;
+                $itemsSubtotal += $lineTotal;
 
                 $sale->items()->create([
                     'product_id' => $product->id,
@@ -146,13 +167,38 @@ class SaleController extends Controller
                 ]);
             }
 
+            // Descuento: nunca puede superar el subtotal (el total jamás es negativo).
+            $discountType = $data['discount_type'] ?? null;
+            $discountValue = (float) ($data['discount_value'] ?? 0);
+            $discountAmount = match ($discountType) {
+                DiscountType::PERCENT->value => round($itemsSubtotal * $discountValue / 100, 2),
+                DiscountType::FIXED->value => $discountValue,
+                default => 0,
+            };
+            $discountAmount = min($discountAmount, $itemsSubtotal);
+
+            // Los precios ya incluyen IVA (decisión de producto): total es lo
+            // que se cobra; tax_amount es solo el desglose informativo.
+            $total = round($itemsSubtotal - $discountAmount, 2);
+            $taxAmount = $taxRate > 0 ? round($total - ($total / (1 + $taxRate / 100)), 2) : 0;
+
             $changeDue = null;
             $tendered = $data['amount_tendered'] ?? null;
             if ($data['payment_method'] === PaymentMethod::CASH->value && $tendered !== null) {
                 $changeDue = round($tendered - $total, 2);
             }
 
-            $sale->update(['total' => $total, 'amount_tendered' => $tendered, 'change_due' => $changeDue]);
+            $sale->update([
+                'items_subtotal' => $itemsSubtotal,
+                'discount_type' => $discountType,
+                'discount_value' => $discountType ? $discountValue : null,
+                'discount_amount' => $discountAmount,
+                'tax_rate' => $taxRate,
+                'tax_amount' => $taxAmount,
+                'total' => $total,
+                'amount_tendered' => $tendered,
+                'change_due' => $changeDue,
+            ]);
 
             return $sale;
         });

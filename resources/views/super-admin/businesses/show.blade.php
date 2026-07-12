@@ -32,6 +32,14 @@
                     @endforeach
                 </select>
             </form>
+            <form method="POST" action="{{ route('super-admin.businesses.tax-rate', $business->id) }}" class="flex items-center gap-1">
+                @csrf @method('PATCH')
+                <label class="text-xs text-slate-400">IVA</label>
+                <input name="tax_rate" type="number" step="0.01" min="0" max="100" value="{{ $business->tax_rate }}"
+                       class="w-16 rounded-md border border-slate-300 px-2 py-1 text-xs">
+                <span class="text-xs text-slate-400">%</span>
+                <button class="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50">Guardar</button>
+            </form>
         </div>
     </header>
 

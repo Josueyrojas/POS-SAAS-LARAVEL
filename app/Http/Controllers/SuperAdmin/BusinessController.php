@@ -95,6 +95,14 @@ class BusinessController extends Controller
         return back()->with('status', 'Plan actualizado.');
     }
 
+    public function updateTaxRate(Request $request, string $business)
+    {
+        $data = $request->validate(['tax_rate' => ['required', 'numeric', 'min:0', 'max:100']]);
+        Business::findOrFail($business)->update(['tax_rate' => $data['tax_rate']]);
+
+        return back()->with('status', 'Tasa de IVA actualizada.');
+    }
+
     private function uniqueSlug(string $name): string
     {
         $base = Str::slug($name) ?: 'negocio';

@@ -12,6 +12,7 @@
             @php($nav = [
                 ['pos.sales.create', 'Vender', 'pos.sales.create'],
                 ['pos.sales.index', 'Ventas', 'pos.sales.index|pos.sales.show'],
+                ['pos.cash-sessions.show', 'Caja', 'pos.cash-sessions.show|pos.cash-sessions.create'],
                 ['pos.dashboard', 'Panel', 'pos.dashboard'],
                 ['pos.products.index', 'Productos', 'pos.products.*'],
                 ['pos.customers.index', 'Clientes', 'pos.customers.*'],
@@ -21,6 +22,7 @@
                 ['pos.suppliers.index', 'Proveedores', 'pos.suppliers.*'],
                 ['pos.purchases.index', 'Compras', 'pos.purchases.*'],
                 ['pos.employees.index', 'Empleados', 'pos.employees.*'],
+                ['pos.cash-sessions.index', 'Cortes de caja', 'pos.cash-sessions.index'],
                 ['pos.reports.sales', 'Reportes', 'pos.reports.*'],
             ])
             @foreach ($nav as [$route, $label, $pattern])

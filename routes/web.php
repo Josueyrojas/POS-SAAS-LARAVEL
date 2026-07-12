@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Pos\CashSessionController;
 use App\Http\Controllers\Pos\CategoryController;
 use App\Http\Controllers\Pos\CustomerController;
 use App\Http\Controllers\Pos\DashboardController;
@@ -37,6 +38,7 @@ Route::middleware(['auth', 'superadmin'])
         Route::get('/businesses/{business}', [BusinessController::class, 'show'])->name('businesses.show');
         Route::patch('/businesses/{business}/status', [BusinessController::class, 'updateStatus'])->name('businesses.status');
         Route::patch('/businesses/{business}/plan', [BusinessController::class, 'updatePlan'])->name('businesses.plan');
+        Route::patch('/businesses/{business}/tax-rate', [BusinessController::class, 'updateTaxRate'])->name('businesses.tax-rate');
     });
 
 // ----------------------------- INQUILINO -------------------------------
@@ -57,17 +59,31 @@ Route::middleware(['auth', 'business'])
         Route::patch('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
         Route::patch('/customers/{customer}/active', [CustomerController::class, 'setActive'])->name('customers.active');
 
+        // Turno de caja: abrir/ver/cerrar es de ambos roles (cada cajero
+        // maneja el suyo). Requerido antes de poder vender (ver abajo).
+        Route::get('/cash-sessions/new', [CashSessionController::class, 'create'])->name('cash-sessions.create');
+        Route::post('/cash-sessions', [CashSessionController::class, 'store'])->name('cash-sessions.store');
+        Route::get('/cash-sessions/current', [CashSessionController::class, 'show'])->name('cash-sessions.show');
+        Route::post('/cash-sessions/close', [CashSessionController::class, 'close'])->name('cash-sessions.close');
+
         // Ventas: vender y ver el propio historial es de ambos roles (el
         // controller filtra el historial del empleado a solo sus ventas).
+        // `cash.session`: no se puede vender sin un turno de caja abierto.
         Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
-        Route::get('/sales/new', [SaleController::class, 'create'])->name('sales.create');
-        Route::get('/sales/products-search', [SaleController::class, 'productsSearch'])->name('sales.products-search');
-        Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
+        Route::middleware('cash.session')->group(function () {
+            Route::get('/sales/new', [SaleController::class, 'create'])->name('sales.create');
+            Route::get('/sales/products-search', [SaleController::class, 'productsSearch'])->name('sales.products-search');
+            Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
+        });
+        // {sale} es un wildcard: debe ir DESPUÉS de /sales/new y /sales/products-search,
+        // si no, "new" se interpreta como un id de venta (ya pasó una vez).
         Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
 
         Route::middleware('business.admin')->group(function () {
             Route::patch('/sales/{sale}/void', [SaleController::class, 'void'])->name('sales.void');
             Route::patch('/sales/{sale}/refund', [SaleController::class, 'refund'])->name('sales.refund');
+
+            Route::get('/cash-sessions', [CashSessionController::class, 'index'])->name('cash-sessions.index');
 
             Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
             Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');

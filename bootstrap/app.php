@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureBusinessAdmin;
 use App\Http\Middleware\EnsureBusinessUser;
+use App\Http\Middleware\EnsureOpenCashSession;
 use App\Http\Middleware\EnsureSuperAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'superadmin' => EnsureSuperAdmin::class,
             'business' => EnsureBusinessUser::class,
             'business.admin' => EnsureBusinessAdmin::class,
+            'cash.session' => EnsureOpenCashSession::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

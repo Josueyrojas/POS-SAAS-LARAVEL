@@ -95,10 +95,32 @@
                                    class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-slate-500 focus:outline-none">
                         </div>
                     </div>
+                    <div class="border-t border-slate-100 pt-3">
+                        <label class="mb-1 block text-xs font-medium text-slate-500">Descuento (opcional)</label>
+                        <div class="flex gap-2">
+                            <select name="discount_type" x-model="discountType" class="rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-slate-500 focus:outline-none">
+                                <option value="">Sin descuento</option>
+                                <option value="PERCENT">%</option>
+                                <option value="FIXED">$ fijo</option>
+                            </select>
+                            <input name="discount_value" x-show="discountType !== ''" x-model.number="discountValue" type="number" step="0.01" min="0"
+                                   class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-slate-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-sm text-slate-500">
+                        <span>Subtotal</span>
+                        <span class="tabular-nums" x-text="'$' + subtotal().toFixed(2)"></span>
+                    </div>
+                    <div x-show="discountAmount() > 0" class="flex items-center justify-between text-sm text-slate-500">
+                        <span>Descuento</span>
+                        <span class="tabular-nums" x-text="'-$' + discountAmount().toFixed(2)"></span>
+                    </div>
                     <div class="flex items-center justify-between border-t border-slate-100 pt-3">
                         <span class="text-sm font-medium text-slate-600">Total</span>
                         <span class="text-lg font-semibold tabular-nums" x-text="'$' + total().toFixed(2)"></span>
                     </div>
+                    <p class="text-xs text-slate-400">IVA incluido</p>
                     <div x-show="paymentMethod === 'CASH' && amountTendered > 0" class="flex items-center justify-between text-sm">
                         <span class="text-slate-500">Cambio</span>
                         <span class="font-medium tabular-nums" x-text="'$' + Math.max(0, amountTendered - total()).toFixed(2)"></span>
@@ -126,6 +148,8 @@
             cart: [],
             paymentMethod: 'CASH',
             amountTendered: null,
+            discountType: '',
+            discountValue: 0,
             async search() {
                 if (this.q === '') { this.results = []; return; }
                 const res = await fetch(`${this.searchUrl}?q=${encodeURIComponent(this.q)}`);
@@ -146,8 +170,17 @@
                 }
                 return { price: parseFloat(item.retail_price), type: 'Menudeo' };
             },
-            total() {
+            subtotal() {
                 return this.cart.reduce((sum, item) => sum + this.priceFor(item).price * item.quantity, 0);
+            },
+            discountAmount() {
+                const sub = this.subtotal();
+                if (this.discountType === 'PERCENT') return Math.min(sub, sub * (this.discountValue || 0) / 100);
+                if (this.discountType === 'FIXED') return Math.min(sub, this.discountValue || 0);
+                return 0;
+            },
+            total() {
+                return this.subtotal() - this.discountAmount();
             },
             beforeSubmit(e) {
                 if (this.cart.length === 0) { e.preventDefault(); return; }

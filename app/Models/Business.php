@@ -16,11 +16,12 @@ class Business extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['name', 'slug', 'status', 'plan'];
+    protected $fillable = ['name', 'slug', 'status', 'plan', 'tax_rate'];
 
     protected $casts = [
         'status' => BusinessStatus::class,
         'plan' => BusinessPlan::class,
+        'tax_rate' => 'decimal:2',
     ];
 
     public function users(): HasMany { return $this->hasMany(User::class); }
