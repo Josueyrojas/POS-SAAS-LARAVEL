@@ -6,6 +6,20 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <style>[x-cloak]{display:none!important}</style>
+<style>
+    /* Recibo imprimible: oculta todo el chrome de la app (sidebar, banners,
+       botones) y deja solo el elemento marcado como ticket en una columna
+       angosta, como una impresora térmica de 80mm. */
+    @media print {
+        aside, .no-print { display: none !important; }
+        main { width: 100% !important; }
+        #receipt-ticket {
+            width: 80mm;
+            margin: 0 auto;
+            font-size: 12px;
+        }
+    }
+</style>
 <script>
     // Al volver con "Atrás/Adelante" del navegador, Chrome puede restaurar la
     // página desde bfcache tal cual quedó (ej. con un modal de "Nuevo…"

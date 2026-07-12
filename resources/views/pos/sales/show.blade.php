@@ -8,7 +8,12 @@
     $initConfig = ['voidUrl' => route('pos.sales.void', $sale->id), 'refundUrl' => route('pos.sales.refund', $sale->id)];
 @endphp
 <div class="mx-auto max-w-2xl px-8 py-8" x-data="{ reasonOpen: null, ...{{ Illuminate\Support\Js::from($initConfig) }} }">
-    <a href="{{ route('pos.sales.index') }}" class="text-sm text-slate-500 hover:text-slate-900">&larr; Volver a ventas</a>
+    <div class="no-print flex items-center justify-between">
+        <a href="{{ route('pos.sales.index') }}" class="text-sm text-slate-500 hover:text-slate-900">&larr; Volver a ventas</a>
+        <button onclick="window.print()" class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            Imprimir
+        </button>
+    </div>
 
     <header class="mt-3 mb-6 flex items-start justify-between">
         <div>
@@ -18,7 +23,9 @@
         <span class="rounded-full px-2.5 py-1 text-xs font-medium {{ $sale->status->badge() }}">{{ $sale->status->label() }}</span>
     </header>
 
-    <div class="rounded-lg border border-slate-200 bg-white p-6">
+    <div id="receipt-ticket" class="rounded-lg border border-slate-200 bg-white p-6">
+        <p class="mb-4 text-center text-sm font-semibold">{{ auth()->user()->business->name ?? '' }}</p>
+
         <div class="mb-4 grid grid-cols-2 gap-4 text-sm">
             <div>
                 <p class="text-xs text-slate-400">Vendedor</p>
@@ -66,9 +73,24 @@
             </tbody>
         </table>
 
-        <div class="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
-            <span class="text-sm font-medium text-slate-600">Total</span>
-            <span class="text-xl font-semibold tabular-nums">${{ number_format($sale->total, 2) }}</span>
+        <div class="mt-4 space-y-1 border-t border-slate-200 pt-3 text-sm">
+            <div class="flex items-center justify-between text-slate-500">
+                <span>Subtotal</span>
+                <span class="tabular-nums">${{ number_format($sale->items_subtotal ?? $sale->total, 2) }}</span>
+            </div>
+            @if ($sale->discount_amount > 0)
+                <div class="flex items-center justify-between text-slate-500">
+                    <span>Descuento @if($sale->discount_type?->value === 'PERCENT')({{ rtrim(rtrim(number_format($sale->discount_value, 2), '0'), '.') }}%)@endif</span>
+                    <span class="tabular-nums">-${{ number_format($sale->discount_amount, 2) }}</span>
+                </div>
+            @endif
+            <div class="flex items-center justify-between border-t border-slate-100 pt-2">
+                <span class="font-medium text-slate-600">Total</span>
+                <span class="text-xl font-semibold tabular-nums">${{ number_format($sale->total, 2) }}</span>
+            </div>
+            @if ($sale->tax_amount !== null)
+                <p class="text-xs text-slate-400">Incluye IVA ({{ rtrim(rtrim(number_format($sale->tax_rate, 2), '0'), '.') }}%): ${{ number_format($sale->tax_amount, 2) }}</p>
+            @endif
         </div>
     </div>
 
@@ -79,7 +101,7 @@
         <p class="mt-4 text-sm text-slate-500">Reembolsada por {{ $sale->refundedBy->name ?? '—' }} el {{ $sale->refunded_at?->format('d/m/Y H:i') }}
             @if ($sale->refund_reason) — {{ $sale->refund_reason }} @endif</p>
     @elseif (auth()->user()->isAdmin())
-        <div class="mt-4 flex gap-3">
+        <div class="no-print mt-4 flex gap-3">
             <button @click="reasonOpen = 'void'" class="rounded-md border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Anular</button>
             <button @click="reasonOpen = 'refund'" class="rounded-md border border-rose-300 px-3.5 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50">Reembolsar</button>
         </div>
