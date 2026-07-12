@@ -19,11 +19,11 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Login de plataforma (Super Admin)
 Route::get('/login', [LoginController::class, 'showSuperAdminForm'])->name('login');
-Route::post('/login', [LoginController::class, 'superAdminLogin']);
+Route::post('/login', [LoginController::class, 'superAdminLogin'])->middleware('throttle:login');
 
 // Login de negocio (acotado por slug)
 Route::get('/login/{slug}', [LoginController::class, 'showBusinessForm'])->name('business.login');
-Route::post('/login/{slug}', [LoginController::class, 'businessLogin']);
+Route::post('/login/{slug}', [LoginController::class, 'businessLogin'])->middleware('throttle:login');
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
