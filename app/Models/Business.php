@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\BusinessPlan;
 use App\Enums\BusinessStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Business extends Model
 {
-    use HasUuids;
+    use HasUuids, HasFactory;
 
     protected $fillable = ['name', 'slug', 'status', 'plan', 'tax_rate'];
 

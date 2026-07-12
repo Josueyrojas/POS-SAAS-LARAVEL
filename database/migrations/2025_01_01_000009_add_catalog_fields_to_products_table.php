@@ -26,18 +26,27 @@ return new class extends Migration
         // Backfill: todo producto existente queda en "Pieza" antes de exigir NOT NULL.
         $piezaId = DB::table('units_of_measure')->where('name', 'Pieza')->value('id');
         DB::table('products')->whereNull('unit_of_measure_id')->update(['unit_of_measure_id' => $piezaId]);
-        DB::statement('ALTER TABLE products ALTER COLUMN unit_of_measure_id SET NOT NULL');
 
-        // price -> retail_price (es el precio de menudeo). Rename nativo de Postgres, sin doctrine/dbal.
+        // price -> retail_price (es el precio de menudeo). RENAME COLUMN es
+        // sintaxis ANSI soportada nativamente por Postgres y SQLite (desde
+        // 3.25), sin doctrine/dbal.
         DB::statement('ALTER TABLE products RENAME COLUMN price TO retail_price');
 
-        // stock: integer -> decimal(12,3), soporta cantidades fraccionarias (ej. 3.5 metros).
-        DB::statement('ALTER TABLE products ALTER COLUMN stock TYPE numeric(12,3) USING stock::numeric');
+        // SET NOT NULL y el cambio de tipo de `stock` (integer -> decimal)
+        // usan ALTER COLUMN, específico de Postgres — SQLite no lo soporta
+        // (y como es de tipado dinámico, ya acepta decimales sin esto). Se
+        // omite en pruebas; en Postgres real sí se aplica.
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE products ALTER COLUMN unit_of_measure_id SET NOT NULL');
+            DB::statement('ALTER TABLE products ALTER COLUMN stock TYPE numeric(12,3) USING stock::numeric');
+        }
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE products ALTER COLUMN stock TYPE integer USING round(stock)::integer');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE products ALTER COLUMN stock TYPE integer USING round(stock)::integer');
+        }
         DB::statement('ALTER TABLE products RENAME COLUMN retail_price TO price');
 
         Schema::table('products', function (Blueprint $table) {

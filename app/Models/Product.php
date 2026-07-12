@@ -5,12 +5,13 @@ namespace App\Models;
 use App\Enums\PriceType;
 use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Product extends Model
 {
-    use HasUuids, BelongsToBusiness;
+    use HasUuids, BelongsToBusiness, HasFactory;
 
     protected $fillable = [
         'name', 'sku', 'unit_of_measure_id', 'category_id',

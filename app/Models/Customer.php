@@ -6,12 +6,13 @@ use App\Enums\PaymentMethod;
 use App\Enums\SaleStatus;
 use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
-    use HasUuids, BelongsToBusiness;
+    use HasUuids, BelongsToBusiness, HasFactory;
 
     protected $fillable = [
         'name', 'phone', 'email', 'document_id', 'address', 'notes', 'is_active', 'business_id',

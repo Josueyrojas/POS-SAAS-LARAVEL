@@ -23,6 +23,13 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
+        <!-- SQLite en memoria: NUNCA apuntar esto a la base de Supabase real
+             — RefreshDatabase corre `migrate:fresh` (dropea todas las
+             tablas) antes del primer test, así que cualquier base "real"
+             quedaría vacía. Las migraciones con sintaxis específica de
+             Postgres (ALTER COLUMN TYPE, ADD CONSTRAINT) se saltan solo bajo
+             SQLite (ver los `if (DB::getDriverName() === 'pgsql')` en
+             database/migrations/) — en Postgres real sí se aplican. -->
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
