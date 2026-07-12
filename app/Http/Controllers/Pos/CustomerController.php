@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Pos;
 
+use App\Enums\PaymentMethod;
+use App\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use Illuminate\Http\Request;
@@ -12,7 +14,13 @@ class CustomerController extends Controller
     {
         $includeArchived = $request->query('archived') === '1';
 
+        // withSum en vez de $c->creditBalance() por fila: dos queries
+        // agregadas para TODOS los clientes en vez de 2 por cliente (N+1).
         $customers = Customer::query()
+            ->withSum(['sales as credit_sales_sum' => fn ($q) => $q
+                ->where('payment_method', PaymentMethod::CREDIT->value)
+                ->where('status', SaleStatus::COMPLETED->value)], 'total')
+            ->withSum('payments as payments_sum', 'amount')
             ->when(! $includeArchived, fn ($q) => $q->where('is_active', true))
             ->orderBy('name')
             ->get();

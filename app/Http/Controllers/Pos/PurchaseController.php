@@ -12,6 +12,7 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class PurchaseController extends Controller
 {
@@ -32,19 +33,28 @@ class PurchaseController extends Controller
 
     public function store(Request $request)
     {
+        $businessId = Auth::user()->business_id;
+
+        // `exists` puro no aplica el BusinessScope: sin el ->where(business_id)
+        // aceptaría el id de un proveedor/producto de OTRO negocio.
         $data = $request->validate([
-            'supplier_id' => ['required', 'uuid', 'exists:suppliers,id'],
+            'supplier_id' => ['required', 'uuid', Rule::exists('suppliers', 'id')->where('business_id', $businessId)],
             'invoice_number' => ['nullable', 'string', 'max:100'],
             'purchase_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'uuid', 'exists:products,id'],
+            'items.*.product_id' => ['required', 'uuid', Rule::exists('products', 'id')->where('business_id', $businessId)],
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
         ]);
 
         DB::transaction(function () use ($data) {
-            $products = Product::whereIn('id', collect($data['items'])->pluck('product_id'))->get()->keyBy('id');
+            $productIds = collect($data['items'])->pluck('product_id')->unique();
+            $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
+            if ($products->count() !== $productIds->count()) {
+                abort(422, 'Uno o más productos ya no existen.');
+            }
 
             $purchase = Purchase::create([
                 'supplier_id' => $data['supplier_id'],

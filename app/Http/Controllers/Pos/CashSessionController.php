@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Pos;
 use App\Enums\CashSessionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\CashSession;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,12 +29,21 @@ class CashSessionController extends Controller
 
         $data = $request->validate(['opening_amount' => ['required', 'numeric', 'min:0']]);
 
-        CashSession::create([
-            'user_id' => Auth::id(),
-            'status' => CashSessionStatus::OPEN,
-            'opening_amount' => $data['opening_amount'],
-            'opening_at' => now(),
-        ]);
+        // El chequeo de arriba no evita una condición de carrera (doble clic,
+        // reintento de red): la garantía real es el índice único parcial
+        // `cash_sessions_one_open_per_user` (ver migración 000021). Si dos
+        // peticiones casi simultáneas llegan aquí, la segunda choca contra
+        // ese índice y se maneja igual que si ya hubiera turno abierto.
+        try {
+            CashSession::create([
+                'user_id' => Auth::id(),
+                'status' => CashSessionStatus::OPEN,
+                'opening_amount' => $data['opening_amount'],
+                'opening_at' => now(),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            return redirect()->route('pos.cash-sessions.show');
+        }
 
         return redirect()->route('pos.sales.create')->with('status', 'Turno abierto.');
     }

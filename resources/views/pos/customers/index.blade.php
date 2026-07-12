@@ -71,7 +71,7 @@
                             </td>
                             <td class="px-3 py-3 text-slate-500">{{ $c->phone ?? '—' }}</td>
                             <td class="px-3 py-3 text-slate-500">{{ $c->email ?? '—' }}</td>
-                            @php($balance = $c->creditBalance())
+                            @php($balance = round(($c->credit_sales_sum ?? 0) - ($c->payments_sum ?? 0), 2))
                             <td class="px-3 py-3 text-right tabular-nums {{ $balance > 0 ? 'font-medium text-rose-600' : 'text-slate-400' }}">
                                 {{ $balance > 0 ? '$'.number_format($balance, 2) : '—' }}
                             </td>

@@ -98,14 +98,22 @@ class ProductController extends Controller
 
     private function validated(Request $request, ?string $productId = null): array
     {
+        $businessId = Auth::user()->business_id;
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:200'],
             'sku' => ['nullable', 'string', 'max:64'],
-            'category_id' => ['nullable', 'uuid', Rule::exists('categories', 'id')],
+            // `unit_of_measure_id` es un catálogo GLOBAL (sin business_id):
+            // Rule::exists sin scope es correcto ahí. `category_id` SÍ es de
+            // negocio — sin el ->where(business_id) aceptaría el id de una
+            // categoría de OTRO negocio.
+            'category_id' => ['nullable', 'uuid', Rule::exists('categories', 'id')->where('business_id', $businessId)],
             'unit_of_measure_id' => ['required', 'uuid', Rule::exists('units_of_measure', 'id')],
             'retail_price' => ['required', 'numeric', 'min:0'],
             'wholesale_price' => ['nullable', 'numeric', 'min:0'],
-            'wholesale_min_qty' => ['nullable', 'numeric', 'min:0'],
+            // min:0.01 (no 0): con 0, priceFor() aplicaría mayoreo a
+            // cualquier cantidad (`$quantity >= 0` siempre es true).
+            'wholesale_min_qty' => ['nullable', 'numeric', 'min:0.01'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'numeric', 'min:0'],
             'stock_minimo' => ['nullable', 'numeric', 'min:0'],

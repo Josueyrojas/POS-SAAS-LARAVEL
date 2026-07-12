@@ -21,6 +21,13 @@ class CustomerPaymentController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
+        // El `max` del HTML es solo cosmético: el servidor es la única
+        // fuente de verdad. Sin esto, un abono mayor al saldo deja un
+        // creditBalance() negativo sin sentido de negocio.
+        if ($data['amount'] > $model->creditBalance()) {
+            return back()->withErrors(['amount' => 'El abono no puede ser mayor al saldo pendiente.'])->withInput();
+        }
+
         CustomerPayment::create([
             'customer_id' => $model->id,
             'amount' => $data['amount'],

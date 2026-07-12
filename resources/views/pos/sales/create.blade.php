@@ -130,9 +130,10 @@
                 </div>
 
                 <div class="border-t border-slate-200 px-4 py-4">
-                    <button :disabled="cart.length === 0" type="submit"
+                    <button :disabled="cart.length === 0 || submitting" type="submit"
                             class="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-40">
-                        Cobrar
+                        <span x-show="!submitting">Cobrar</span>
+                        <span x-show="submitting">Procesando…</span>
                     </button>
                 </div>
             </div>
@@ -153,6 +154,7 @@
             customerId: '',
             discountType: '',
             discountValue: 0,
+            submitting: false,
             async search() {
                 if (this.q === '') { this.results = []; return; }
                 const res = await fetch(`${this.searchUrl}?q=${encodeURIComponent(this.q)}`);
@@ -186,9 +188,14 @@
                 return this.subtotal() - this.discountAmount();
             },
             beforeSubmit(e) {
+                // Evita doble venta por doble clic/reintento: una vez que un
+                // envío válido arranca, se deshabilita el botón hasta que la
+                // página navegue (éxito) o el usuario la recargue (error).
+                if (this.submitting) { e.preventDefault(); return; }
                 if (this.cart.length === 0) { e.preventDefault(); return; }
                 if (this.paymentMethod === 'CREDIT' && this.customerId === '') { e.preventDefault(); return; }
                 this.cart = this.cart.filter(i => i.quantity > 0);
+                this.submitting = true;
             },
         };
     }

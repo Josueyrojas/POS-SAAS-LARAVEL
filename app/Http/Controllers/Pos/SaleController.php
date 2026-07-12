@@ -77,8 +77,13 @@ class SaleController extends Controller
      */
     public function store(Request $request)
     {
+        $businessId = Auth::user()->business_id;
+
         $data = $request->validate([
-            'customer_id' => ['nullable', 'uuid', 'exists:customers,id'],
+            // `exists` puro no aplica el BusinessScope (es una query cruda a
+            // la tabla): sin el ->where(business_id) aceptaría el id de un
+            // cliente de OTRO negocio.
+            'customer_id' => ['nullable', 'uuid', Rule::exists('customers', 'id')->where('business_id', $businessId)],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
             'amount_tendered' => ['nullable', 'numeric', 'min:0'],
             'discount_type' => ['nullable', Rule::enum(DiscountType::class)],
@@ -190,6 +195,9 @@ class SaleController extends Controller
             $changeDue = null;
             $tendered = $data['amount_tendered'] ?? null;
             if ($data['payment_method'] === PaymentMethod::CASH->value && $tendered !== null) {
+                if ($tendered < $total) {
+                    abort(422, 'El monto recibido es menor al total de la venta.');
+                }
                 $changeDue = round($tendered - $total, 2);
             }
 
