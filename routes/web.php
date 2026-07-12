@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pos\CashSessionController;
 use App\Http\Controllers\Pos\CategoryController;
@@ -23,9 +24,22 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/login', [LoginController::class, 'showSuperAdminForm'])->name('login');
 Route::post('/login', [LoginController::class, 'superAdminLogin'])->middleware('throttle:login');
 
+// Recuperación de contraseña — plataforma. Deben ir ANTES de /login/{slug}
+// (mismo número de segmentos: si no, "forgot-password" se leería como slug).
+Route::get('/login/forgot-password', [PasswordResetController::class, 'showSuperAdminForgotForm'])->name('password.super-admin.request');
+Route::post('/login/forgot-password', [PasswordResetController::class, 'sendSuperAdminResetLink'])->middleware('throttle:login')->name('password.super-admin.email');
+Route::get('/login/reset-password/{token}', [PasswordResetController::class, 'showSuperAdminResetForm'])->name('password.super-admin.reset');
+Route::post('/login/reset-password/{token}', [PasswordResetController::class, 'resetSuperAdminPassword'])->name('password.super-admin.update');
+
 // Login de negocio (acotado por slug)
 Route::get('/login/{slug}', [LoginController::class, 'showBusinessForm'])->name('business.login');
 Route::post('/login/{slug}', [LoginController::class, 'businessLogin'])->middleware('throttle:login');
+
+// Recuperación de contraseña — negocio.
+Route::get('/login/{slug}/forgot-password', [PasswordResetController::class, 'showBusinessForgotForm'])->name('password.business.request');
+Route::post('/login/{slug}/forgot-password', [PasswordResetController::class, 'sendBusinessResetLink'])->middleware('throttle:login')->name('password.business.email');
+Route::get('/login/{slug}/reset-password/{token}', [PasswordResetController::class, 'showBusinessResetForm'])->name('password.business.reset');
+Route::post('/login/{slug}/reset-password/{token}', [PasswordResetController::class, 'resetBusinessPassword'])->name('password.business.update');
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 

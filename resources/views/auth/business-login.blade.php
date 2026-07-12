@@ -33,7 +33,8 @@
                 </button>
             </form>
 
-            <a href="{{ route('home') }}" class="mt-6 block text-center text-sm text-slate-500 hover:text-slate-900">← Elegir otro negocio</a>
+            <a href="{{ route('password.business.request', $business->slug) }}" class="mt-4 block text-center text-sm text-slate-500 hover:text-slate-900">¿Olvidaste tu contraseña?</a>
+            <a href="{{ route('home') }}" class="mt-2 block text-center text-sm text-slate-500 hover:text-slate-900">← Elegir otro negocio</a>
         </div>
     </div>
 </div>

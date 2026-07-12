@@ -31,7 +31,8 @@
                 </button>
             </form>
 
-            <a href="{{ route('home') }}" class="mt-6 block text-center text-sm text-slate-500 hover:text-slate-900">← Volver al inicio</a>
+            <a href="{{ route('password.super-admin.request') }}" class="mt-4 block text-center text-sm text-slate-500 hover:text-slate-900">¿Olvidaste tu contraseña?</a>
+            <a href="{{ route('home') }}" class="mt-2 block text-center text-sm text-slate-500 hover:text-slate-900">← Volver al inicio</a>
         </div>
     </div>
 </div>
