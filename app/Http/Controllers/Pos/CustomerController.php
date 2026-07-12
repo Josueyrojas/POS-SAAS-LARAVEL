@@ -20,6 +20,25 @@ class CustomerController extends Controller
         return view('pos.customers.index', compact('customers', 'includeArchived'));
     }
 
+    public function show(string $customer)
+    {
+        $model = Customer::findOrFail($customer);
+
+        $sales = $model->sales()
+            ->where('payment_method', \App\Enums\PaymentMethod::CREDIT->value)
+            ->latest()
+            ->get(['id', 'total', 'status', 'created_at']);
+
+        $payments = $model->payments()->with('createdBy')->latest()->get();
+
+        return view('pos.customers.show', [
+            'customer' => $model,
+            'creditSales' => $sales,
+            'payments' => $payments,
+            'balance' => $model->creditBalance(),
+        ]);
+    }
+
     public function store(Request $request)
     {
         Customer::create($this->validated($request));
@@ -53,8 +72,8 @@ class CustomerController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        // Vacío -> null (evita colisión en UNIQUE [business_id, document_id]).
-        $data['document_id'] = $data['document_id'] !== null && $data['document_id'] !== '' ? $data['document_id'] : null;
+        // Vacío/ausente -> null (evita colisión en UNIQUE [business_id, document_id]).
+        $data['document_id'] = ($data['document_id'] ?? null) !== null && $data['document_id'] !== '' ? $data['document_id'] : null;
 
         return $data;
     }

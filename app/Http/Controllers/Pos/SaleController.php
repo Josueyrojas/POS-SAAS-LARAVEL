@@ -92,6 +92,11 @@ class SaleController extends Controller
             abort(422, 'El descuento porcentual no puede ser mayor a 100%.');
         }
 
+        // Fiado: sin cliente real no hay a quién cobrarle después.
+        if ($data['payment_method'] === PaymentMethod::CREDIT->value && empty($data['customer_id'])) {
+            abort(422, 'Selecciona un cliente para vender a crédito.');
+        }
+
         $cashSession = CashSession::where('user_id', Auth::id())
             ->where('status', CashSessionStatus::OPEN->value)
             ->first();

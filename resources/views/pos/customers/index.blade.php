@@ -47,7 +47,7 @@
                         <th class="py-3 pl-5 pr-3 font-medium">Nombre</th>
                         <th class="px-3 py-3 font-medium">Teléfono</th>
                         <th class="px-3 py-3 font-medium">Correo</th>
-                        <th class="px-3 py-3 font-medium">Documento</th>
+                        <th class="px-3 py-3 text-right font-medium">Saldo fiado</th>
                         <th class="py-3 pl-3 pr-5 text-right font-medium">Acciones</th>
                     </tr>
                 </thead>
@@ -63,7 +63,7 @@
                             x-show="q === '' || {{ Illuminate\Support\Js::from(Str::lower($c->name.' '.$c->phone)) }}.includes(q.toLowerCase())">
                             <td class="py-3 pl-5 pr-3">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-medium">{{ $c->name }}</span>
+                                    <a href="{{ route('pos.customers.show', $c->id) }}" class="font-medium text-indigo-600 hover:text-indigo-500">{{ $c->name }}</a>
                                     @unless ($c->is_active)
                                         <span class="rounded bg-slate-200 px-1.5 py-0.5 text-xs text-slate-500">Archivado</span>
                                     @endunless
@@ -71,7 +71,10 @@
                             </td>
                             <td class="px-3 py-3 text-slate-500">{{ $c->phone ?? '—' }}</td>
                             <td class="px-3 py-3 text-slate-500">{{ $c->email ?? '—' }}</td>
-                            <td class="px-3 py-3 text-slate-500">{{ $c->document_id ?? '—' }}</td>
+                            @php($balance = $c->creditBalance())
+                            <td class="px-3 py-3 text-right tabular-nums {{ $balance > 0 ? 'font-medium text-rose-600' : 'text-slate-400' }}">
+                                {{ $balance > 0 ? '$'.number_format($balance, 2) : '—' }}
+                            </td>
                             <td class="py-3 pl-3 pr-5">
                                 <div class="flex items-center justify-end gap-3">
                                     <button @click="openEdit({{ Illuminate\Support\Js::from($editPayload) }})"

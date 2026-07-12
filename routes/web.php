@@ -5,6 +5,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pos\CashSessionController;
 use App\Http\Controllers\Pos\CategoryController;
 use App\Http\Controllers\Pos\CustomerController;
+use App\Http\Controllers\Pos\CustomerPaymentController;
 use App\Http\Controllers\Pos\DashboardController;
 use App\Http\Controllers\Pos\ProductController;
 use App\Http\Controllers\Pos\EmployeeController;
@@ -58,6 +59,8 @@ Route::middleware(['auth', 'business'])
         Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
         Route::patch('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
         Route::patch('/customers/{customer}/active', [CustomerController::class, 'setActive'])->name('customers.active');
+        Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
+        Route::post('/customers/{customer}/payments', [CustomerPaymentController::class, 'store'])->name('customer-payments.store');
 
         // Turno de caja: abrir/ver/cerrar es de ambos roles (cada cajero
         // maneja el suyo). Requerido antes de poder vender (ver abajo).

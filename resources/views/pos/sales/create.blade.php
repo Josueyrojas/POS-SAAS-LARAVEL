@@ -71,13 +71,14 @@
 
                 <div class="space-y-3 border-t border-slate-200 px-4 py-4">
                     <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-500">Cliente (opcional)</label>
-                        <select name="customer_id" class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-slate-500 focus:outline-none">
+                        <label class="mb-1 block text-xs font-medium text-slate-500">Cliente <span x-show="paymentMethod === 'CREDIT'">(obligatorio para fiado)</span></label>
+                        <select name="customer_id" x-model="customerId" class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-slate-500 focus:outline-none">
                             <option value="">Cliente mostrador</option>
                             <template x-for="c in customers" :key="c.id">
                                 <option :value="c.id" x-text="c.name"></option>
                             </template>
                         </select>
+                        <p x-show="paymentMethod === 'CREDIT' && customerId === ''" class="mt-1 text-xs text-rose-600">Elige un cliente para vender a crédito.</p>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
@@ -86,6 +87,7 @@
                                 <option value="CASH">Efectivo</option>
                                 <option value="CARD">Tarjeta</option>
                                 <option value="TRANSFER">Transferencia</option>
+                                <option value="CREDIT">Fiado (crédito)</option>
                                 <option value="OTHER">Otro</option>
                             </select>
                         </div>
@@ -148,6 +150,7 @@
             cart: [],
             paymentMethod: 'CASH',
             amountTendered: null,
+            customerId: '',
             discountType: '',
             discountValue: 0,
             async search() {
@@ -184,6 +187,7 @@
             },
             beforeSubmit(e) {
                 if (this.cart.length === 0) { e.preventDefault(); return; }
+                if (this.paymentMethod === 'CREDIT' && this.customerId === '') { e.preventDefault(); return; }
                 this.cart = this.cart.filter(i => i.quantity > 0);
             },
         };
