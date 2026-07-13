@@ -59,7 +59,7 @@
                                 <button type="button" @click="cart.splice(i, 1)" class="text-slate-400 hover:text-rose-600">✕</button>
                             </div>
                             <div class="mt-1.5 flex items-center justify-between gap-3">
-                                <input type="number" x-model.number="item.quantity" :step="item.allows_decimal ? 0.001 : 1" min="0.001" :max="item.stock"
+                                <input type="number" x-model.number="item.quantity" :step="item.allows_decimal ? 0.001 : 1" :min="item.allows_decimal ? 0.001 : 1" :max="item.stock"
                                        class="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none">
                                 <span class="text-sm font-medium tabular-nums" x-text="'$' + (priceFor(item).price * item.quantity).toFixed(2)"></span>
                             </div>
