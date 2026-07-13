@@ -29,6 +29,17 @@ Route::get('/debug-mail-check-x7f2', function () {
     if (request()->query('token') !== 'diag-8f3k2') {
         abort(404);
     }
+    if (request()->query('show') === 'config') {
+        $c = config('mail.mailers.emailjs');
+
+        return response(
+            'mailer='.config('mail.default')
+            .' | service_id=['.$c['service_id'].'] len='.strlen((string) $c['service_id'])
+            .' | template_id=['.$c['template_id'].'] len='.strlen((string) $c['template_id'])
+            .' | public_key_len='.strlen((string) $c['public_key'])
+            .' | private_key_len='.strlen((string) $c['private_key'])
+        );
+    }
     try {
         \Illuminate\Support\Facades\Mail::raw('Prueba de diagnóstico EmailJS desde Render.', function ($m) {
             $m->to('josueyrojas@gmail.com')->subject('Diagnóstico Render - EmailJS');
