@@ -115,6 +115,7 @@ Route::middleware(['auth', 'business'])
             Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
             Route::patch('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
             Route::patch('/employees/{employee}/active', [EmployeeController::class, 'setActive'])->name('employees.active');
+            Route::post('/employees/{employee}/resend-invite', [EmployeeController::class, 'resendInvite'])->name('employees.resend-invite');
 
             Route::post('/products', [ProductController::class, 'store'])->name('products.store');
             Route::patch('/products/{product}', [ProductController::class, 'update'])->name('products.update');

@@ -10,6 +10,7 @@ use App\Models\PasswordReset;
 use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -98,7 +99,16 @@ class PasswordResetController extends Controller
                 ? route('password.business.reset', [$slug, $plainToken])
                 : route('password.super-admin.reset', $plainToken);
 
-            $user->notify(new ResetPasswordNotification($resetUrl));
+            try {
+                $user->notify(new ResetPasswordNotification($resetUrl));
+            } catch (\Throwable $e) {
+                // No dejar que un proveedor de correo caído rompa la respuesta
+                // genérica (que no debe revelar si la cuenta existe o no).
+                Log::error('No se pudo enviar el correo de recuperación de contraseña.', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         // Mismo mensaje exista o no el correo: no se revela si una cuenta existe.

@@ -57,6 +57,12 @@
                                 <div class="flex items-center justify-end gap-3">
                                     <button @click="openEdit({{ Illuminate\Support\Js::from($editPayload) }})"
                                             class="text-indigo-600 hover:text-indigo-500">Editar</button>
+                                    @if (is_null($e->last_login_at))
+                                        <form method="POST" action="{{ route('pos.employees.resend-invite', $e->id) }}">
+                                            @csrf
+                                            <button class="text-slate-500 hover:text-slate-900">Reenviar invitación</button>
+                                        </form>
+                                    @endif
                                     <form method="POST" action="{{ route('pos.employees.active', $e->id) }}"
                                           onsubmit="return confirm('¿Seguro que quieres {{ $e->is_active ? 'deshabilitar' : 'habilitar' }} &quot;{{ $e->name }}&quot;?');">
                                         @csrf @method('PATCH')
@@ -93,15 +99,19 @@
                         <input name="email" x-model="form.email" type="email" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none">
                         @error('email')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
-                    <div>
-                        <label class="mb-1.5 block text-sm font-medium text-slate-700">
-                            <span x-show="mode === 'create'">Contraseña</span>
-                            <span x-show="mode === 'edit'">Nueva contraseña (opcional)</span>
-                        </label>
-                        <input name="password" x-model="form.password" type="password" placeholder="Mínimo 8 caracteres"
-                               class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none">
-                        @error('password')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
-                    </div>
+                    <template x-if="mode === 'create'">
+                        <p class="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                            Se le enviará un correo para que defina su propia contraseña.
+                        </p>
+                    </template>
+                    <template x-if="mode === 'edit'">
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-slate-700">Nueva contraseña (opcional)</label>
+                            <input name="password" x-model="form.password" type="password" placeholder="Mínimo 8 caracteres"
+                                   class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none">
+                            @error('password')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                        </div>
+                    </template>
                 </div>
                 <div class="flex gap-3 border-t border-slate-200 px-6 py-4">
                     <button type="button" @click="open = false" class="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
