@@ -19,7 +19,8 @@
             <p class="mt-1 text-sm text-slate-500">Registra tu primera venta desde el punto de venta.</p>
         </div>
     @else
-        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div class="rounded-lg border border-slate-200 bg-white">
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
@@ -46,6 +47,8 @@
                 </tbody>
             </table>
         </div>
+        </div>
+        <div class="mt-4">{{ $sales->links() }}</div>
     @endif
 </div>
 @endsection

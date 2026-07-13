@@ -26,7 +26,7 @@ class SaleController extends Controller
         $sales = Sale::with(['seller', 'customer'])
             ->when(! Auth::user()->isAdmin(), fn ($q) => $q->where('seller_id', Auth::id()))
             ->latest()
-            ->get();
+            ->paginate(25);
 
         return view('pos.sales.index', compact('sales'));
     }
@@ -131,6 +131,10 @@ class SaleController extends Controller
                 'seller_id' => Auth::id(),
                 'customer_id' => $data['customer_id'] ?? null,
                 'cash_session_id' => $cashSession->id,
+                // La sucursal se elige al abrir el turno de caja (es la caja
+                // física la que vive en un lugar) — la venta la hereda, sin
+                // pedir un selector aparte en el checkout.
+                'branch_id' => $cashSession->branch_id,
                 'status' => SaleStatus::COMPLETED,
                 'payment_method' => $data['payment_method'],
                 'total' => 0,

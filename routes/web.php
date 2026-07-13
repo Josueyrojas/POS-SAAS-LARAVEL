@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Pos\BranchController;
+use App\Http\Controllers\Pos\BusinessSettingsController;
 use App\Http\Controllers\Pos\CashSessionController;
 use App\Http\Controllers\Pos\CategoryController;
 use App\Http\Controllers\Pos\CustomerController;
@@ -54,6 +57,9 @@ Route::middleware(['auth', 'superadmin'])
         Route::patch('/businesses/{business}/status', [BusinessController::class, 'updateStatus'])->name('businesses.status');
         Route::patch('/businesses/{business}/plan', [BusinessController::class, 'updatePlan'])->name('businesses.plan');
         Route::patch('/businesses/{business}/tax-rate', [BusinessController::class, 'updateTaxRate'])->name('businesses.tax-rate');
+
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     });
 
 // ----------------------------- INQUILINO -------------------------------
@@ -65,6 +71,9 @@ Route::middleware(['auth', 'business'])
     ->name('pos.')
     ->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
         Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 
@@ -132,5 +141,13 @@ Route::middleware(['auth', 'business'])
             Route::get('/reports/top-products', [ReportController::class, 'topProducts'])->name('reports.top-products');
             Route::get('/reports/low-stock', [ReportController::class, 'lowStock'])->name('reports.low-stock');
             Route::get('/reports/margin', [ReportController::class, 'margin'])->name('reports.margin');
+
+            Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
+            Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
+            Route::patch('/branches/{branch}', [BranchController::class, 'update'])->name('branches.update');
+            Route::patch('/branches/{branch}/active', [BranchController::class, 'setActive'])->name('branches.active');
+
+            Route::get('/settings', [BusinessSettingsController::class, 'edit'])->name('settings.edit');
+            Route::patch('/settings', [BusinessSettingsController::class, 'update'])->name('settings.update');
         });
     });

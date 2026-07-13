@@ -17,7 +17,10 @@ class Business extends Model
 {
     use HasUuids, HasFactory;
 
-    protected $fillable = ['name', 'slug', 'status', 'plan', 'tax_rate'];
+    protected $fillable = [
+        'name', 'slug', 'status', 'plan', 'tax_rate',
+        'address', 'phone', 'logo_url', 'receipt_footer',
+    ];
 
     protected $casts = [
         'status' => BusinessStatus::class,

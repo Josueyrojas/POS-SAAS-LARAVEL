@@ -10,7 +10,7 @@
         'customers' => $customers->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]),
     ];
 @endphp
-<div class="mx-auto flex max-w-6xl gap-6 px-8 py-8"
+<div class="mx-auto flex max-w-6xl flex-col gap-6 px-8 py-8 lg:flex-row"
      x-data="saleForm({{ Illuminate\Support\Js::from($initConfig) }})">
     {{-- Panel izquierdo: búsqueda de productos --}}
     <div class="flex-1">
@@ -36,7 +36,7 @@
     </div>
 
     {{-- Panel derecho: carrito --}}
-    <div class="w-96 shrink-0">
+    <div class="w-full lg:w-96 lg:shrink-0">
         <form method="POST" action="{{ route('pos.sales.store') }}" @submit="beforeSubmit">
             @csrf
             <div class="rounded-lg border border-slate-200 bg-white">

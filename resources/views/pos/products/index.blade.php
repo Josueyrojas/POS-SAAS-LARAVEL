@@ -56,7 +56,8 @@
             @endcan
         </div>
     @else
-        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div class="rounded-lg border border-slate-200 bg-white">
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
@@ -133,7 +134,8 @@
                                     <div class="flex items-center justify-end gap-3">
                                         <button @click="openEdit({{ Illuminate\Support\Js::from($editPayload) }})"
                                                 class="text-indigo-600 hover:text-indigo-500">Editar</button>
-                                        <form method="POST" action="{{ route('pos.products.active', $p->id) }}">
+                                        <form method="POST" action="{{ route('pos.products.active', $p->id) }}"
+                                              onsubmit="return confirm('¿Seguro que quieres {{ $p->is_active ? 'archivar' : 'restaurar' }} &quot;{{ $p->name }}&quot;?');">
                                             @csrf @method('PATCH')
                                             <input type="hidden" name="is_active" value="{{ $p->is_active ? 0 : 1 }}">
                                             <button class="text-slate-500 hover:text-slate-900">{{ $p->is_active ? 'Archivar' : 'Restaurar' }}</button>
@@ -147,6 +149,7 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
         </div>
     @endif
 

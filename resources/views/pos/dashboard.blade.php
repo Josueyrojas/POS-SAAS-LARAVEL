@@ -28,7 +28,8 @@
     @if ($lowStockProducts->isNotEmpty())
         <div class="mt-8">
             <h2 class="mb-3 text-sm font-semibold text-slate-700">Alertas de stock bajo</h2>
-            <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <div class="rounded-lg border border-slate-200 bg-white">
+            <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <tbody>
                         @foreach ($lowStockProducts as $p)
@@ -41,6 +42,7 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
             </div>
         </div>
     @endif

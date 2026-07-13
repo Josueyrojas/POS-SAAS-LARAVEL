@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Pos;
 use App\Enums\PurchaseStatus;
 use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\StockMovement;
@@ -18,7 +19,7 @@ class PurchaseController extends Controller
 {
     public function index()
     {
-        $purchases = Purchase::with('supplier')->latest('purchase_date')->latest()->get();
+        $purchases = Purchase::with('supplier')->latest('purchase_date')->latest()->paginate(25);
 
         return view('pos.purchases.index', compact('purchases'));
     }
@@ -27,8 +28,9 @@ class PurchaseController extends Controller
     {
         $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
         $products = Product::where('is_active', true)->with('unitOfMeasure')->orderBy('name')->get();
+        $branches = Branch::where('is_active', true)->orderBy('name')->get();
 
-        return view('pos.purchases.create', compact('suppliers', 'products'));
+        return view('pos.purchases.create', compact('suppliers', 'products', 'branches'));
     }
 
     public function store(Request $request)
@@ -36,9 +38,10 @@ class PurchaseController extends Controller
         $businessId = Auth::user()->business_id;
 
         // `exists` puro no aplica el BusinessScope: sin el ->where(business_id)
-        // aceptaría el id de un proveedor/producto de OTRO negocio.
+        // aceptaría el id de un proveedor/producto/sucursal de OTRO negocio.
         $data = $request->validate([
             'supplier_id' => ['required', 'uuid', Rule::exists('suppliers', 'id')->where('business_id', $businessId)],
+            'branch_id' => ['nullable', 'uuid', Rule::exists('branches', 'id')->where('business_id', $businessId)],
             'invoice_number' => ['nullable', 'string', 'max:100'],
             'purchase_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -58,6 +61,7 @@ class PurchaseController extends Controller
 
             $purchase = Purchase::create([
                 'supplier_id' => $data['supplier_id'],
+                'branch_id' => $data['branch_id'] ?? null,
                 'invoice_number' => $data['invoice_number'] ?? null,
                 'purchase_date' => $data['purchase_date'],
                 'notes' => $data['notes'] ?? null,

@@ -54,7 +54,8 @@
 
     <section class="mt-8">
         <h2 class="mb-3 text-sm font-medium uppercase tracking-wide text-slate-400">Administradores del negocio</h2>
-        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div class="rounded-lg border border-slate-200 bg-white">
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
@@ -81,6 +82,7 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
         </div>
     </section>
 </div>

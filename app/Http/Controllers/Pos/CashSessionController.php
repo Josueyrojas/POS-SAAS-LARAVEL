@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Pos;
 
 use App\Enums\CashSessionStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Models\CashSession;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class CashSessionController extends Controller
 {
@@ -18,7 +20,11 @@ class CashSessionController extends Controller
             return redirect()->route('pos.cash-sessions.show');
         }
 
-        return view('pos.cash-sessions.create');
+        // Solo se pide elegir sucursal si el negocio configuró más de una;
+        // con 0 o 1 sucursal el turno abre igual que siempre (branch_id null).
+        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+
+        return view('pos.cash-sessions.create', compact('branches'));
     }
 
     public function store(Request $request)
@@ -27,7 +33,10 @@ class CashSessionController extends Controller
             return redirect()->route('pos.cash-sessions.show');
         }
 
-        $data = $request->validate(['opening_amount' => ['required', 'numeric', 'min:0']]);
+        $data = $request->validate([
+            'opening_amount' => ['required', 'numeric', 'min:0'],
+            'branch_id' => ['nullable', 'uuid', Rule::exists('branches', 'id')->where('business_id', Auth::user()->business_id)],
+        ]);
 
         // El chequeo de arriba no evita una condición de carrera (doble clic,
         // reintento de red): la garantía real es el índice único parcial
@@ -37,6 +46,7 @@ class CashSessionController extends Controller
         try {
             CashSession::create([
                 'user_id' => Auth::id(),
+                'branch_id' => $data['branch_id'] ?? null,
                 'status' => CashSessionStatus::OPEN,
                 'opening_amount' => $data['opening_amount'],
                 'opening_at' => now(),

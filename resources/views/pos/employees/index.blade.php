@@ -28,7 +28,8 @@
             <p class="mt-1 text-sm text-slate-500">Da de alta a tu primer cajero para que pueda usar el punto de venta.</p>
         </div>
     @else
-        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div class="rounded-lg border border-slate-200 bg-white">
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
@@ -56,7 +57,8 @@
                                 <div class="flex items-center justify-end gap-3">
                                     <button @click="openEdit({{ Illuminate\Support\Js::from($editPayload) }})"
                                             class="text-indigo-600 hover:text-indigo-500">Editar</button>
-                                    <form method="POST" action="{{ route('pos.employees.active', $e->id) }}">
+                                    <form method="POST" action="{{ route('pos.employees.active', $e->id) }}"
+                                          onsubmit="return confirm('¿Seguro que quieres {{ $e->is_active ? 'deshabilitar' : 'habilitar' }} &quot;{{ $e->name }}&quot;?');">
                                         @csrf @method('PATCH')
                                         <input type="hidden" name="is_active" value="{{ $e->is_active ? 0 : 1 }}">
                                         <button class="text-slate-500 hover:text-slate-900">{{ $e->is_active ? 'Deshabilitar' : 'Habilitar' }}</button>
@@ -67,6 +69,7 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
         </div>
     @endif
 

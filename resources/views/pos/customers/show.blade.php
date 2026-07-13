@@ -29,7 +29,8 @@
         @if ($creditSales->isEmpty())
             <p class="text-sm text-slate-400">Sin ventas a crédito todavía.</p>
         @else
-            <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <div class="rounded-lg border border-slate-200 bg-white">
+            <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <tbody>
                         @foreach ($creditSales as $s)
@@ -48,6 +49,7 @@
                     </tbody>
                 </table>
             </div>
+            </div>
         @endif
     </section>
 
@@ -56,7 +58,8 @@
         @if ($payments->isEmpty())
             <p class="text-sm text-slate-400">Sin abonos todavía.</p>
         @else
-            <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <div class="rounded-lg border border-slate-200 bg-white">
+            <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <tbody>
                         @foreach ($payments as $p)
@@ -68,6 +71,7 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
             </div>
         @endif
     </section>

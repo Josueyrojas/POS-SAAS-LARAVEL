@@ -23,8 +23,20 @@
         <span class="rounded-full px-2.5 py-1 text-xs font-medium {{ $sale->status->badge() }}">{{ $sale->status->label() }}</span>
     </header>
 
+    @php($business = auth()->user()->business)
     <div id="receipt-ticket" class="rounded-lg border border-slate-200 bg-white p-6">
-        <p class="mb-4 text-center text-sm font-semibold">{{ auth()->user()->business->name ?? '' }}</p>
+        <div class="mb-4 text-center">
+            @if ($business?->logo_url)
+                <img src="{{ $business->logo_url }}" alt="" class="mx-auto mb-2 max-h-16">
+            @endif
+            <p class="text-sm font-semibold">{{ $business->name ?? '' }}</p>
+            @if ($business?->address)
+                <p class="text-xs text-slate-500">{{ $business->address }}</p>
+            @endif
+            @if ($business?->phone)
+                <p class="text-xs text-slate-500">{{ $business->phone }}</p>
+            @endif
+        </div>
 
         <div class="mb-4 grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -92,6 +104,10 @@
                 <p class="text-xs text-slate-400">Incluye IVA ({{ rtrim(rtrim(number_format($sale->tax_rate, 2), '0'), '.') }}%): ${{ number_format($sale->tax_amount, 2) }}</p>
             @endif
         </div>
+
+        @if ($business?->receipt_footer)
+            <p class="mt-4 border-t border-slate-100 pt-3 text-center text-xs text-slate-500">{{ $business->receipt_footer }}</p>
+        @endif
     </div>
 
     @if ($sale->status->value === 'VOIDED')

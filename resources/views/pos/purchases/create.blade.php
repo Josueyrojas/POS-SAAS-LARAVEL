@@ -35,10 +35,25 @@
                     @error('purchase_date')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                 </div>
             </div>
-            <div class="mt-4">
-                <label class="mb-1.5 block text-sm font-medium text-slate-700">No. de factura (opcional)</label>
-                <input name="invoice_number" value="{{ old('invoice_number') }}"
-                       class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none">
+            <div class="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">No. de factura (opcional)</label>
+                    <input name="invoice_number" value="{{ old('invoice_number') }}"
+                           class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none">
+                </div>
+                @if ($branches->count() > 1)
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-slate-700">Sucursal</label>
+                        <select name="branch_id" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none">
+                            <option value="">Sin especificar</option>
+                            @foreach ($branches as $b)
+                                <option value="{{ $b->id }}" @selected(old('branch_id') === $b->id)>{{ $b->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @elseif ($branches->count() === 1)
+                    <input type="hidden" name="branch_id" value="{{ $branches->first()->id }}">
+                @endif
             </div>
         </div>
 

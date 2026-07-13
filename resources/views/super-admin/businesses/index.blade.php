@@ -41,7 +41,8 @@
             <p class="mt-1 text-sm text-slate-500">Da de alta el primer negocio para empezar a operar.</p>
         </div>
     @else
-        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div class="rounded-lg border border-slate-200 bg-white">
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
@@ -94,6 +95,7 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
         </div>
     @endif
 

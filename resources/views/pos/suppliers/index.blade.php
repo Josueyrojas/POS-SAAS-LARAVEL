@@ -38,7 +38,8 @@
             <p class="mt-1 text-sm text-slate-500">Agrega tu primer proveedor para registrar compras.</p>
         </div>
     @else
-        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div class="rounded-lg border border-slate-200 bg-white">
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
@@ -73,7 +74,8 @@
                                 <div class="flex items-center justify-end gap-3">
                                     <button @click="openEdit({{ Illuminate\Support\Js::from($editPayload) }})"
                                             class="text-indigo-600 hover:text-indigo-500">Editar</button>
-                                    <form method="POST" action="{{ route('pos.suppliers.active', $s->id) }}">
+                                    <form method="POST" action="{{ route('pos.suppliers.active', $s->id) }}"
+                                          onsubmit="return confirm('¿Seguro que quieres {{ $s->is_active ? 'archivar' : 'restaurar' }} &quot;{{ $s->name }}&quot;?');">
                                         @csrf @method('PATCH')
                                         <input type="hidden" name="is_active" value="{{ $s->is_active ? 0 : 1 }}">
                                         <button class="text-slate-500 hover:text-slate-900">{{ $s->is_active ? 'Archivar' : 'Restaurar' }}</button>
@@ -84,6 +86,7 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
         </div>
     @endif
 
