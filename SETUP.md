@@ -68,10 +68,11 @@ Abre `http://localhost:8000`.
 ## Recorrido
 
 - `/` — portada pública con los negocios activos + botón "Iniciar sesión".
-- Clic en **Demo Store** → login del negocio → `admin@demo.dev` / `***REMOVED***`
-  → POS con el CRUD de productos.
-- Botón **Iniciar sesión** → login de plataforma → `root@platform.dev` /
-  `***REMOVED***` → panel de Super Admin.
+- Clic en **Demo Store** → login del negocio → `admin@demo.dev` (contraseña
+  definida al sembrar los datos — ver salida de `php artisan db:seed`, nunca
+  se documenta en texto plano aquí) → POS con el CRUD de productos.
+- Botón **Iniciar sesión** → login de plataforma → `root@platform.dev` →
+  panel de Super Admin.
 
 ## Notas de arquitectura
 

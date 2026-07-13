@@ -13,11 +13,19 @@ use App\Models\Supplier;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Contraseñas nunca hardcodeadas en el repo: si defines las env vars
+        // (útil en CI/staging) las usa; si no, genera una al azar y la
+        // imprime una sola vez en la consola de este comando.
+        $superAdminPassword = env('SEED_SUPER_ADMIN_PASSWORD', Str::random(16));
+        $adminPassword = env('SEED_ADMIN_PASSWORD', Str::random(16));
+        $employeePassword = env('SEED_EMPLOYEE_PASSWORD', Str::random(16));
+
         // 1. Super Admin de plataforma (business_id null).
         // No usamos updateOrCreate por email global: garantizamos unicidad a mano
         // porque con business_id NULL el UNIQUE compuesto no aplica en Postgres.
@@ -25,10 +33,11 @@ class DatabaseSeeder extends Seeder
             User::create([
                 'name' => 'Platform Root',
                 'email' => 'root@platform.dev',
-                'password' => '***REMOVED***', // cast 'hashed' lo encripta
+                'password' => $superAdminPassword, // cast 'hashed' lo encripta
                 'role' => UserRole::SUPER_ADMIN->value,
                 'business_id' => null,
             ]);
+            $this->command?->info("Super Admin creado: root@platform.dev / {$superAdminPassword}");
         }
 
         // 2. Negocio demo + su administrador + un empleado.
@@ -41,23 +50,27 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        User::firstOrCreate(
-            ['business_id' => $business->id, 'email' => 'admin@demo.dev'],
-            [
+        if (User::where('business_id', $business->id)->where('email', 'admin@demo.dev')->doesntExist()) {
+            User::create([
+                'business_id' => $business->id,
+                'email' => 'admin@demo.dev',
                 'name' => 'Demo Admin',
-                'password' => '***REMOVED***',
+                'password' => $adminPassword,
                 'role' => UserRole::BUSINESS_ADMIN->value,
-            ]
-        );
+            ]);
+            $this->command?->info("Demo Admin creado: admin@demo.dev / {$adminPassword}");
+        }
 
-        User::firstOrCreate(
-            ['business_id' => $business->id, 'email' => 'empleado@demo.dev'],
-            [
+        if (User::where('business_id', $business->id)->where('email', 'empleado@demo.dev')->doesntExist()) {
+            User::create([
+                'business_id' => $business->id,
+                'email' => 'empleado@demo.dev',
                 'name' => 'Demo Empleado',
-                'password' => '***REMOVED***',
+                'password' => $employeePassword,
                 'role' => UserRole::EMPLOYEE->value,
-            ]
-        );
+            ]);
+            $this->command?->info("Demo Empleado creado: empleado@demo.dev / {$employeePassword}");
+        }
 
         // 3. Categoría, proveedor y cliente demo (business_id explícito: en
         // seeding no hay contexto de inquilino activo).
