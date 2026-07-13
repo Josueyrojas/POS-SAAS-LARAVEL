@@ -45,7 +45,12 @@ return [
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            // Sin límite, un SMTP saliente bloqueado por el proveedor de hosting
+            // (frecuente en el tier gratis de muchos PaaS) cuelga la petición
+            // completa hasta que el propio gateway la mata con un 504 — antes
+            // de que nuestro try/catch pueda reaccionar. Con timeout corto,
+            // falla rápido y sí queda como un error manejado y registrado.
+            'timeout' => (int) env('MAIL_TIMEOUT', 10),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 

@@ -63,6 +63,7 @@
                         <th class="px-3 py-2.5 font-medium">Correo</th>
                         <th class="px-3 py-2.5 font-medium">Estado</th>
                         <th class="px-3 py-2.5 font-medium">Último acceso</th>
+                        <th class="py-2.5 pl-3 pr-5 text-right font-medium">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -78,6 +79,16 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2.5 text-slate-500">{{ $u->last_login_at?->format('d/m/Y H:i') ?? 'Nunca' }}</td>
+                            <td class="py-2.5 pl-3 pr-5 text-right">
+                                @if (is_null($u->last_login_at))
+                                    <form method="POST" action="{{ route('super-admin.businesses.admins.resend-invite', [$business->id, $u->id]) }}">
+                                        @csrf
+                                        <button class="text-indigo-600 hover:text-indigo-500">Reenviar invitación</button>
+                                    </form>
+                                @else
+                                    <span class="text-slate-300">—</span>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

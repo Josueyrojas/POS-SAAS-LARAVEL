@@ -138,12 +138,9 @@
                                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none">
                                 @error('admin_email')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                             </div>
-                            <div>
-                                <label class="mb-1.5 block text-sm font-medium text-slate-700">Contraseña temporal</label>
-                                <input name="admin_password" type="password" placeholder="Mínimo 8 caracteres"
-                                       class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none">
-                                @error('admin_password')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
-                            </div>
+                            <p class="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                                Se le enviará un correo para que defina su propia contraseña.
+                            </p>
                         </div>
                     </div>
                 </div>

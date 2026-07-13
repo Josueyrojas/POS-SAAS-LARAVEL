@@ -7,9 +7,12 @@ use App\Enums\BusinessStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\PasswordReset;
 use App\Models\User;
+use App\Notifications\WelcomeEmployeeNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
 
@@ -46,6 +49,12 @@ class BusinessController extends Controller
         return view('super-admin.businesses.show', ['business' => $model, 'admins' => $admins]);
     }
 
+    /**
+     * El Super Admin ya no captura la contraseña del admin del negocio: se
+     * crea con una contraseña aleatoria inservible y se le manda un correo
+     * de bienvenida (mismo mecanismo que el alta de empleados) para que él
+     * mismo la defina. Nunca circula una contraseña en texto plano.
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -53,11 +62,13 @@ class BusinessController extends Controller
             'plan' => ['required', new Enum(BusinessPlan::class)],
             'admin_name' => ['required', 'string', 'min:2', 'max:120'],
             'admin_email' => ['required', 'email', 'max:190'],
-            'admin_password' => ['required', 'string', 'min:8', 'max:72'],
         ]);
 
         // Alta atómica: si el correo colisiona, no queda un negocio huérfano.
-        DB::transaction(function () use ($data) {
+        // El envío de correo NO va dentro de la transacción: es un efecto
+        // externo, y si el proveedor de correo falla el negocio igual debe
+        // quedar creado ("Reenviar invitación" es la vía de recuperación).
+        [$business, $admin] = DB::transaction(function () use ($data) {
             $business = Business::create([
                 'name' => $data['name'],
                 'slug' => $this->uniqueSlug($data['name']),
@@ -65,18 +76,74 @@ class BusinessController extends Controller
                 'status' => BusinessStatus::ACTIVE->value,
             ]);
 
-            User::create([
+            $admin = User::create([
                 'name' => $data['admin_name'],
                 'email' => $data['admin_email'],
-                'password' => $data['admin_password'], // cast 'hashed' lo encripta
+                'password' => Str::random(40), // inservible: el admin define la suya por correo
                 'role' => UserRole::BUSINESS_ADMIN->value,
                 'business_id' => $business->id,
             ]);
+
+            return [$business, $admin];
         });
+
+        $emailSent = $this->sendWelcomeEmail($admin, $business);
+
+        $status = $emailSent
+            ? 'Negocio creado. Se le envió un correo al administrador para que defina su contraseña.'
+            : 'Negocio creado, pero el correo de bienvenida no se pudo enviar. Usa "Reenviar invitación" para intentar de nuevo.';
 
         return redirect()
             ->route('super-admin.businesses.index')
-            ->with('status', 'Negocio creado correctamente.');
+            ->with('status', $status);
+    }
+
+    /**
+     * Por si el correo de bienvenida se perdió, fue a spam, expiró (60 min),
+     * o falló al enviarse: solo tiene sentido mientras el admin nunca ha
+     * iniciado sesión, es decir, mientras sigue con la contraseña aleatoria
+     * inservible.
+     */
+    public function resendInvite(string $business, string $user)
+    {
+        $model = Business::findOrFail($business);
+        $admin = $model->users()->where('role', UserRole::BUSINESS_ADMIN->value)->findOrFail($user);
+
+        if ($admin->last_login_at !== null) {
+            abort(422, 'Este administrador ya inició sesión; usa "Recuperar contraseña" en el login si la olvidó.');
+        }
+
+        $emailSent = $this->sendWelcomeEmail($admin, $model);
+
+        return back()->with('status', $emailSent ? 'Invitación reenviada.' : 'No se pudo enviar el correo. Intenta de nuevo más tarde.');
+    }
+
+    private function sendWelcomeEmail(User $admin, Business $business): bool
+    {
+        PasswordReset::where('user_id', $admin->id)->delete();
+
+        $plainToken = Str::random(64);
+        PasswordReset::create([
+            'user_id' => $admin->id,
+            'token_hash' => hash('sha256', $plainToken),
+            'expires_at' => now()->addMinutes(60),
+        ]);
+
+        $setPasswordUrl = route('password.business.reset', [$business->slug, $plainToken]);
+
+        try {
+            $admin->notify(new WelcomeEmployeeNotification($business->name, $setPasswordUrl));
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('No se pudo enviar el correo de bienvenida al admin del negocio.', [
+                'admin_id' => $admin->id,
+                'business_id' => $business->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     public function updateStatus(Request $request, string $business)
