@@ -23,34 +23,6 @@ use Illuminate\Support\Facades\Route;
 // ------------------------------ PÚBLICO --------------------------------
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// TEMPORAL: diagnóstico de EmailJS desde el entorno real de Render. Se retira
-// apenas se identifique la causa de por qué el correo real no llega.
-Route::get('/debug-mail-check-x7f2', function () {
-    if (request()->query('token') !== 'diag-8f3k2') {
-        abort(404);
-    }
-    if (request()->query('show') === 'config') {
-        $c = config('mail.mailers.emailjs');
-
-        return response(
-            'mailer='.config('mail.default')
-            .' | service_id=['.$c['service_id'].'] len='.strlen((string) $c['service_id'])
-            .' | template_id=['.$c['template_id'].'] len='.strlen((string) $c['template_id'])
-            .' | public_key_len='.strlen((string) $c['public_key'])
-            .' | private_key_len='.strlen((string) $c['private_key'])
-        );
-    }
-    try {
-        \Illuminate\Support\Facades\Mail::raw('Prueba de diagnóstico EmailJS desde Render.', function ($m) {
-            $m->to('josueyrojas@gmail.com')->subject('Diagnóstico Render - EmailJS');
-        });
-
-        return response('OK: enviado sin excepción', 200);
-    } catch (\Throwable $e) {
-        return response('ERROR: '.get_class($e).' | '.$e->getMessage(), 200);
-    }
-});
-
 // Login de plataforma (Super Admin)
 Route::get('/login', [LoginController::class, 'showSuperAdminForm'])->name('login');
 Route::post('/login', [LoginController::class, 'superAdminLogin'])->middleware('throttle:login');
