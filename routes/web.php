@@ -58,6 +58,7 @@ Route::middleware(['auth', 'superadmin'])
         Route::patch('/businesses/{business}/plan', [BusinessController::class, 'updatePlan'])->name('businesses.plan');
         Route::patch('/businesses/{business}/tax-rate', [BusinessController::class, 'updateTaxRate'])->name('businesses.tax-rate');
         Route::post('/businesses/{business}/admins/{user}/resend-invite', [BusinessController::class, 'resendInvite'])->name('businesses.admins.resend-invite');
+        Route::delete('/businesses/{business}', [BusinessController::class, 'destroy'])->name('businesses.destroy');
 
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

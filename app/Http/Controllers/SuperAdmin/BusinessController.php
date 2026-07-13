@@ -170,6 +170,30 @@ class BusinessController extends Controller
         return back()->with('status', 'Tasa de IVA actualizada.');
     }
 
+    /**
+     * Borrado permanente e irreversible: TODO lo del negocio (ventas,
+     * productos, usuarios, compras, etc.) se elimina en cascada a nivel de
+     * base de datos (cascadeOnDelete en cada FK a businesses). Exige escribir
+     * el nombre exacto del negocio para confirmar — no es un simple confirm(),
+     * a diferencia de archivar/restaurar, esto no tiene vuelta atrás.
+     */
+    public function destroy(Request $request, string $business)
+    {
+        $model = Business::findOrFail($business);
+
+        $data = $request->validate(['confirm_name' => ['required', 'string']]);
+
+        if ($data['confirm_name'] !== $model->name) {
+            return back()->withErrors(['confirm_name' => 'El nombre no coincide. Escribe el nombre exacto del negocio para confirmar.']);
+        }
+
+        $model->delete();
+
+        return redirect()
+            ->route('super-admin.businesses.index')
+            ->with('status', 'Negocio eliminado permanentemente junto con todos sus datos.');
+    }
+
     private function uniqueSlug(string $name): string
     {
         $base = Str::slug($name) ?: 'negocio';
