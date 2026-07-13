@@ -18,13 +18,6 @@ return [
         'key' => env('POSTMARK_API_KEY'),
     ],
 
-    'mailgun' => [
-        'domain' => env('MAILGUN_DOMAIN'),
-        'secret' => env('MAILGUN_SECRET'),
-        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
-        'scheme' => 'https',
-    ],
-
     'resend' => [
         'key' => env('RESEND_API_KEY'),
     ],
