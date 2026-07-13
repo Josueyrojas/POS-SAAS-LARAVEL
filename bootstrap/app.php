@@ -15,6 +15,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Render (y la mayoría de PaaS) termina el HTTPS en su balanceador y
+        // reenvía la petición al contenedor por HTTP plano, marcando el
+        // esquema original en X-Forwarded-Proto. Sin confiar en ese header,
+        // Laravel genera todas sus URLs (incluida la acción de los <form>)
+        // como http://, lo que el navegador marca como envío inseguro. El
+        // contenedor solo es alcanzable a través del balanceador de Render,
+        // así que confiar en cualquier proxy aquí es seguro.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'superadmin' => EnsureSuperAdmin::class,
             'business' => EnsureBusinessUser::class,
