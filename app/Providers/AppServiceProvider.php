@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Mail\Transport\EmailJsTransport;
 use App\Models\User;
 use App\Support\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -38,5 +40,16 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($key);
         });
+
+        // Solución temporal mientras no hay dominio propio verificado en un
+        // proveedor transaccional: EmailJS envía por API HTTPS (nunca
+        // bloqueada, a diferencia del SMTP saliente que sí bloquea Render)
+        // usando la cuenta de Gmail conectada en su dashboard.
+        Mail::extend('emailjs', fn (array $config) => new EmailJsTransport(
+            $config['service_id'],
+            $config['template_id'],
+            $config['public_key'],
+            $config['private_key'],
+        ));
     }
 }
