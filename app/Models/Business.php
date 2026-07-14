@@ -20,12 +20,14 @@ class Business extends Model
     protected $fillable = [
         'name', 'slug', 'status', 'plan', 'tax_rate',
         'address', 'phone', 'logo_url', 'receipt_footer',
+        'low_stock_alert_sent_at',
     ];
 
     protected $casts = [
         'status' => BusinessStatus::class,
         'plan' => BusinessPlan::class,
         'tax_rate' => 'decimal:2',
+        'low_stock_alert_sent_at' => 'datetime',
     ];
 
     public function users(): HasMany { return $this->hasMany(User::class); }

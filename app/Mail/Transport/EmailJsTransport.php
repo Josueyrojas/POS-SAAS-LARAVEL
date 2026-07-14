@@ -38,7 +38,11 @@ class EmailJsTransport extends AbstractTransport
         // preserva los saltos de línea con "white-space: pre-line".
         $textBody = trim((string) ($email->getTextBody() ?? strip_tags((string) $email->getHtmlBody())));
 
-        $response = Http::asJson()->post('https://api.emailjs.com/api/v1.0/email/send', [
+        // Sin timeout, una llamada colgada (red inestable, EmailJS caído)
+        // bloquea toda la petición hasta que el propio gateway la mate — el
+        // mismo problema que ya tuvimos con el SMTP de Gmail (ver
+        // config/mail.php). Falla rápido y queda como error manejado.
+        $response = Http::timeout(10)->asJson()->post('https://api.emailjs.com/api/v1.0/email/send', [
             'service_id' => $this->serviceId,
             'template_id' => $this->templateId,
             'user_id' => $this->publicKey,
