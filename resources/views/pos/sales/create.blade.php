@@ -22,6 +22,8 @@
         <input x-model="q" @input.debounce.300ms="search()" type="text" placeholder="Buscar producto por nombre o SKU…"
                class="mb-4 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none">
 
+        <p x-show="searchError" x-cloak class="mb-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700" x-text="searchError"></p>
+
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <template x-for="p in results" :key="p.id">
                 <button type="button" @click="addToCart(p)"
@@ -31,7 +33,7 @@
                     <p class="mt-1.5 text-sm font-semibold text-indigo-600" x-text="'$' + parseFloat(p.retail_price).toFixed(2)"></p>
                 </button>
             </template>
-            <p x-show="q !== '' && results.length === 0" class="col-span-full text-sm text-slate-400">Sin resultados.</p>
+            <p x-show="!searchError && q !== '' && results.length === 0" class="col-span-full text-sm text-slate-400">Sin resultados.</p>
         </div>
     </div>
 
@@ -130,6 +132,7 @@
                 </div>
 
                 <div class="border-t border-slate-200 px-4 py-4">
+                    <p x-show="submitError" x-cloak class="mb-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700" x-text="submitError"></p>
                     <button :disabled="cart.length === 0 || submitting" type="submit"
                             class="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-40">
                         <span x-show="!submitting">Cobrar</span>
@@ -148,6 +151,7 @@
             customers: config.customers,
             q: '',
             results: [],
+            searchError: null,
             cart: [],
             paymentMethod: 'CASH',
             amountTendered: null,
@@ -155,10 +159,21 @@
             discountType: '',
             discountValue: 0,
             submitting: false,
+            submitError: null,
             async search() {
-                if (this.q === '') { this.results = []; return; }
-                const res = await fetch(`${this.searchUrl}?q=${encodeURIComponent(this.q)}`);
-                this.results = await res.json();
+                if (this.q === '') { this.results = []; this.searchError = null; return; }
+                if (!navigator.onLine) {
+                    this.searchError = 'Sin conexión a internet — no se puede buscar productos ahora.';
+                    return;
+                }
+                try {
+                    const res = await fetch(`${this.searchUrl}?q=${encodeURIComponent(this.q)}`);
+                    if (!res.ok) throw new Error('server');
+                    this.results = await res.json();
+                    this.searchError = null;
+                } catch (e) {
+                    this.searchError = 'No se pudo buscar. Revisa tu conexión e intenta de nuevo.';
+                }
             },
             addToCart(p) {
                 const existing = this.cart.find(i => i.product_id === p.id);
@@ -194,6 +209,12 @@
                 if (this.submitting) { e.preventDefault(); return; }
                 if (this.cart.length === 0) { e.preventDefault(); return; }
                 if (this.paymentMethod === 'CREDIT' && this.customerId === '') { e.preventDefault(); return; }
+                if (!navigator.onLine) {
+                    e.preventDefault();
+                    this.submitError = 'Sin conexión a internet — la venta no se puede cobrar hasta que vuelva la señal. Nada se perdió, tu carrito sigue aquí.';
+                    return;
+                }
+                this.submitError = null;
                 this.cart = this.cart.filter(i => i.quantity > 0);
                 this.submitting = true;
             },

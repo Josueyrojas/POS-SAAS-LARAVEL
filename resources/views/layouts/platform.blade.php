@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>@include('partials.head')</head>
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased" x-data="{ sidebarOpen: false }">
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased"
+      x-data="{ sidebarOpen: false, online: navigator.onLine }"
+      x-init="window.addEventListener('online', () => online = true); window.addEventListener('offline', () => online = false)">
+    <div x-show="!online" x-cloak class="bg-rose-600 px-4 py-2 text-center text-sm font-medium text-white">
+        Sin conexión a internet.
+    </div>
 <div class="flex min-h-screen">
     {{-- Barra superior: solo visible en móvil (&lt; lg), da acceso al menú. --}}
     <div class="fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
