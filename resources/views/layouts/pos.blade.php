@@ -28,21 +28,21 @@
         </div>
         <nav class="flex-1 overflow-y-auto p-3">
             @php($nav = [
-                ['pos.sales.create', 'Vender', 'pos.sales.create'],
-                ['pos.sales.index', 'Ventas', 'pos.sales.index|pos.sales.show'],
-                ['pos.cash-sessions.show', 'Caja', 'pos.cash-sessions.show|pos.cash-sessions.create'],
                 ['pos.dashboard', 'Panel', 'pos.dashboard'],
+                ['pos.sales.create', 'Vender', 'pos.sales.create'],
+                ['pos.cash-sessions.show', 'Caja', 'pos.cash-sessions.show|pos.cash-sessions.create'],
+                ['pos.sales.index', 'Ventas', 'pos.sales.index|pos.sales.show'],
                 ['pos.products.index', 'Productos', 'pos.products.*'],
                 ['pos.customers.index', 'Clientes', 'pos.customers.*'],
             ])
             @php($adminNav = [
+                ['pos.reports.sales', 'Reportes', 'pos.reports.*'],
+                ['pos.cash-sessions.index', 'Cortes de caja', 'pos.cash-sessions.index'],
                 ['pos.categories.index', 'Categorías', 'pos.categories.*'],
                 ['pos.suppliers.index', 'Proveedores', 'pos.suppliers.*'],
                 ['pos.purchases.index', 'Compras', 'pos.purchases.*'],
                 ['pos.branches.index', 'Sucursales', 'pos.branches.*'],
                 ['pos.employees.index', 'Empleados', 'pos.employees.*'],
-                ['pos.cash-sessions.index', 'Cortes de caja', 'pos.cash-sessions.index'],
-                ['pos.reports.sales', 'Reportes', 'pos.reports.*'],
                 ['pos.settings.edit', 'Configuración', 'pos.settings.*'],
             ])
             @foreach ($nav as [$route, $label, $pattern])
