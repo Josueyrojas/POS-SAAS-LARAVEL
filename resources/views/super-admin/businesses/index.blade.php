@@ -5,14 +5,20 @@
 
 @section('content')
 <div class="mx-auto max-w-6xl px-8 py-8" x-data="{ open: @json($errors->any() && old('name') !== null) }">
-    <header class="mb-8 flex items-end justify-between">
+    <header class="mb-8 flex items-end justify-between gap-4">
         <div>
             <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Consola de plataforma</p>
             <h1 class="mt-1 text-2xl font-semibold tracking-tight">Negocios</h1>
         </div>
-        <button @click="open = true" class="rounded-md bg-slate-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-slate-700">
-            Nuevo negocio
-        </button>
+        <div class="flex items-center gap-4">
+            <div x-data="liveClock()" class="text-right">
+                <p class="text-lg font-semibold tabular-nums text-slate-700" x-text="time"></p>
+                <p class="text-xs text-slate-400" x-text="date"></p>
+            </div>
+            <button @click="open = true" class="rounded-md bg-slate-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-slate-700">
+                Nuevo negocio
+            </button>
+        </div>
     </header>
 
     {{-- Tira de estado --}}

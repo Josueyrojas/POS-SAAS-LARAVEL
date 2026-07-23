@@ -30,4 +30,27 @@
             window.location.reload();
         }
     });
+
+    // Reloj en vivo de los paneles: usa el reloj del dispositivo del usuario
+    // (no el del servidor) — es la hora real de quien está viendo la pantalla.
+    function liveClock() {
+        return {
+            time: '',
+            date: '',
+            interval: null,
+            init() {
+                this.tick();
+                this.interval = setInterval(() => this.tick(), 1000);
+            },
+            tick() {
+                const now = new Date();
+                this.time = now.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const date = now.toLocaleDateString('es-GT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                this.date = date.charAt(0).toUpperCase() + date.slice(1);
+            },
+            destroy() {
+                clearInterval(this.interval);
+            },
+        };
+    }
 </script>

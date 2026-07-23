@@ -3,8 +3,16 @@
 
 @section('content')
 <div class="mx-auto max-w-4xl px-8 py-8">
-    <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Punto de venta</p>
-    <h1 class="mt-1 text-2xl font-semibold tracking-tight">{{ $business->name }}</h1>
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Punto de venta</p>
+            <h1 class="mt-1 text-2xl font-semibold tracking-tight">{{ $business->name }}</h1>
+        </div>
+        <div x-data="liveClock()" class="shrink-0 text-right">
+            <p class="text-lg font-semibold tabular-nums text-slate-700" x-text="time"></p>
+            <p class="text-xs text-slate-400" x-text="date"></p>
+        </div>
+    </div>
 
     <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div class="rounded-lg border border-slate-200 bg-white px-4 py-3">
