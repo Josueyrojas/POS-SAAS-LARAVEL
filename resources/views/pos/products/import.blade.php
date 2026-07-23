@@ -16,9 +16,9 @@
     <div class="rounded-lg border border-slate-200 bg-white p-5">
         <h2 class="text-sm font-semibold">Formato esperado</h2>
         <p class="mt-1 text-sm text-slate-500">
-            Columnas: <code class="rounded bg-slate-100 px-1">sku, name, description, category, unit_of_measure,
-            retail_price, wholesale_price, wholesale_min_qty, cost_price, stock, stock_minimo, is_active</code>.
-            Solo <strong>name</strong>, <strong>retail_price</strong> y <strong>unit_of_measure</strong> son obligatorias
+            Columnas: <code class="rounded bg-slate-100 px-1">sku, nombre, descripcion, categoria, unidad_medida,
+            precio_menudeo, precio_mayoreo, cantidad_minima_mayoreo, precio_costo, stock, stock_minimo, activo</code>.
+            Solo <strong>nombre</strong>, <strong>precio_menudeo</strong> y <strong>unidad_medida</strong> son obligatorias
             (unidad debe ser una existente: Pieza, Metro, Kilogramo, Litro, Paquete, Caja, Rollo o Par). Si el SKU
             coincide con un producto ya existente, se actualiza en vez de duplicarse.
         </p>

@@ -24,9 +24,9 @@ class ProductController extends Controller
 {
     /** Columnas del CSV de importación/exportación, en orden — mismo formato en ambos sentidos. */
     private const CSV_COLUMNS = [
-        'sku', 'name', 'description', 'category', 'unit_of_measure',
-        'retail_price', 'wholesale_price', 'wholesale_min_qty', 'cost_price',
-        'stock', 'stock_minimo', 'is_active',
+        'sku', 'nombre', 'descripcion', 'categoria', 'unidad_medida',
+        'precio_menudeo', 'precio_mayoreo', 'cantidad_minima_mayoreo', 'precio_costo',
+        'stock', 'stock_minimo', 'activo',
     ];
 
     public function index(Request $request)
@@ -157,42 +157,42 @@ class ProductController extends Controller
         $results = [];
         foreach ($rows as $i => $row) {
             $rowNumber = $i + 2; // +1 por índice base 0, +1 por la fila de encabezado.
-            $name = trim((string) ($row['name'] ?? ''));
+            $name = trim((string) ($row['nombre'] ?? ''));
 
             try {
                 if ($name === '') {
                     throw new \RuntimeException('Falta el nombre.');
                 }
 
-                $retailPrice = $this->parseDecimal($row['retail_price'] ?? null);
+                $retailPrice = $this->parseDecimal($row['precio_menudeo'] ?? null);
                 if ($retailPrice === null) {
                     throw new \RuntimeException('Falta o es inválido el precio de menudeo.');
                 }
 
-                $unit = $this->resolveUnitOfMeasure(trim((string) ($row['unit_of_measure'] ?? '')));
+                $unit = $this->resolveUnitOfMeasure(trim((string) ($row['unidad_medida'] ?? '')));
                 if (! $unit) {
                     $valid = UnitOfMeasure::orderBy('name')->pluck('name')->implode(', ');
                     throw new \RuntimeException("Unidad de medida no reconocida. Válidas: {$valid}.");
                 }
 
-                $categoryId = $this->resolveOrCreateCategory(trim((string) ($row['category'] ?? '')), $businessId);
+                $categoryId = $this->resolveOrCreateCategory(trim((string) ($row['categoria'] ?? '')), $businessId);
 
                 $sku = trim((string) ($row['sku'] ?? ''));
                 $sku = $sku !== '' ? $sku : null;
 
                 $data = [
                     'name' => $name,
-                    'description' => trim((string) ($row['description'] ?? '')) ?: null,
+                    'description' => trim((string) ($row['descripcion'] ?? '')) ?: null,
                     'sku' => $sku,
                     'category_id' => $categoryId,
                     'unit_of_measure_id' => $unit->id,
                     'retail_price' => $retailPrice,
-                    'wholesale_price' => $this->parseDecimal($row['wholesale_price'] ?? null),
-                    'wholesale_min_qty' => $this->parseDecimal($row['wholesale_min_qty'] ?? null),
-                    'cost_price' => $this->parseDecimal($row['cost_price'] ?? null),
+                    'wholesale_price' => $this->parseDecimal($row['precio_mayoreo'] ?? null),
+                    'wholesale_min_qty' => $this->parseDecimal($row['cantidad_minima_mayoreo'] ?? null),
+                    'cost_price' => $this->parseDecimal($row['precio_costo'] ?? null),
                     'stock' => $this->parseDecimal($row['stock'] ?? null) ?? 0,
                     'stock_minimo' => $this->parseDecimal($row['stock_minimo'] ?? null) ?? 0,
-                    'is_active' => ! in_array(trim((string) ($row['is_active'] ?? '1')), ['0', 'false', 'no'], true),
+                    'is_active' => ! in_array(trim((string) ($row['activo'] ?? '1')), ['0', 'false', 'no'], true),
                 ];
 
                 if (! $unit->allows_decimal && floor($data['stock']) != $data['stock']) {
