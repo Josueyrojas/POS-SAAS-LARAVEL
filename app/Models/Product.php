@@ -14,7 +14,7 @@ class Product extends Model
     use HasUuids, BelongsToBusiness, HasFactory;
 
     protected $fillable = [
-        'name', 'sku', 'unit_of_measure_id', 'category_id',
+        'name', 'description', 'sku', 'unit_of_measure_id', 'category_id',
         'retail_price', 'wholesale_price', 'wholesale_min_qty', 'cost_price',
         'stock', 'stock_minimo', 'is_active', 'business_id',
     ];

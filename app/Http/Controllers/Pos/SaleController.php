@@ -55,6 +55,7 @@ class SaleController extends Controller
             ->map(fn (Product $p) => [
                 'id' => $p->id,
                 'name' => $p->name,
+                'description' => $p->description,
                 'sku' => $p->sku,
                 'unit' => $p->unitOfMeasure->abbreviation,
                 'allows_decimal' => $p->unitOfMeasure->allows_decimal,

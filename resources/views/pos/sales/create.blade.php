@@ -30,6 +30,7 @@
                         class="rounded-lg border border-slate-200 bg-white p-3 text-left hover:border-indigo-400 hover:shadow-sm">
                     <p class="text-sm font-medium" x-text="p.name"></p>
                     <p class="mt-0.5 text-xs text-slate-400" x-text="(p.sku ?? '—') + ' · ' + p.stock + ' ' + p.unit + ' disp.'"></p>
+                    <p x-show="p.description" x-text="p.description" class="mt-1 line-clamp-2 text-xs text-slate-500"></p>
                     <p class="mt-1.5 text-sm font-semibold text-indigo-600" x-text="'$' + parseFloat(p.retail_price).toFixed(2)"></p>
                 </button>
             </template>

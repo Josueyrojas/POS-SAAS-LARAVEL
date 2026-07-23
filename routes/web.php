@@ -123,6 +123,9 @@ Route::middleware(['auth', 'business'])
             Route::patch('/products/{product}', [ProductController::class, 'update'])->name('products.update');
             Route::patch('/products/{product}/active', [ProductController::class, 'setActive'])->name('products.active');
             Route::patch('/products/{product}/stock', [ProductController::class, 'adjustStock'])->name('products.stock');
+            Route::get('/products/export', [ProductController::class, 'export'])->name('products.export');
+            Route::get('/products/import', [ProductController::class, 'importForm'])->name('products.import.form');
+            Route::post('/products/import', [ProductController::class, 'import'])->name('products.import');
 
             Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
             Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');

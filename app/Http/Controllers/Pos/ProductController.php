@@ -22,6 +22,13 @@ use Illuminate\Validation\Rule;
  */
 class ProductController extends Controller
 {
+    /** Columnas del CSV de importación/exportación, en orden — mismo formato en ambos sentidos. */
+    private const CSV_COLUMNS = [
+        'sku', 'name', 'description', 'category', 'unit_of_measure',
+        'retail_price', 'wholesale_price', 'wholesale_min_qty', 'cost_price',
+        'stock', 'stock_minimo', 'is_active',
+    ];
+
     public function index(Request $request)
     {
         $includeArchived = $request->query('archived') === '1';
@@ -96,12 +103,204 @@ class ProductController extends Controller
         return back();
     }
 
+    /** Exporta TODOS los productos (activos y archivados) del negocio — sirve también como plantilla para importar. */
+    public function export()
+    {
+        $products = Product::with(['category', 'unitOfMeasure'])->orderBy('name')->get();
+
+        $filename = 'productos-'.now()->format('Y-m-d').'.csv';
+
+        return response()->streamDownload(function () use ($products) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // BOM: Excel abre el UTF-8 con acentos correctamente.
+            fputcsv($out, self::CSV_COLUMNS);
+
+            foreach ($products as $p) {
+                fputcsv($out, [
+                    $p->sku,
+                    $p->name,
+                    $p->description,
+                    $p->category->name ?? '',
+                    $p->unitOfMeasure->name,
+                    $p->retail_price,
+                    $p->wholesale_price,
+                    $p->wholesale_min_qty,
+                    $p->cost_price,
+                    $p->stock,
+                    $p->stock_minimo,
+                    $p->is_active ? '1' : '0',
+                ]);
+            }
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
+    public function importForm()
+    {
+        return view('pos.products.import');
+    }
+
+    /**
+     * Importa por CSV para migrar de otra plataforma. Nunca falla todo el
+     * lote por una fila mala: cada fila se procesa aparte y se reporta el
+     * resultado (creado/actualizado/error) — un catálogo de 300 productos
+     * con 2 filas mal escritas no debe rechazarse completo.
+     */
+    public function import(Request $request)
+    {
+        $request->validate(['file' => ['required', 'file', 'mimes:csv,txt', 'max:5120']]);
+
+        $rows = $this->parseCsv($request->file('file')->getRealPath());
+        $businessId = Auth::user()->business_id;
+
+        $results = [];
+        foreach ($rows as $i => $row) {
+            $rowNumber = $i + 2; // +1 por índice base 0, +1 por la fila de encabezado.
+            $name = trim((string) ($row['name'] ?? ''));
+
+            try {
+                if ($name === '') {
+                    throw new \RuntimeException('Falta el nombre.');
+                }
+
+                $retailPrice = $this->parseDecimal($row['retail_price'] ?? null);
+                if ($retailPrice === null) {
+                    throw new \RuntimeException('Falta o es inválido el precio de menudeo.');
+                }
+
+                $unit = $this->resolveUnitOfMeasure(trim((string) ($row['unit_of_measure'] ?? '')));
+                if (! $unit) {
+                    $valid = UnitOfMeasure::orderBy('name')->pluck('name')->implode(', ');
+                    throw new \RuntimeException("Unidad de medida no reconocida. Válidas: {$valid}.");
+                }
+
+                $categoryId = $this->resolveOrCreateCategory(trim((string) ($row['category'] ?? '')), $businessId);
+
+                $sku = trim((string) ($row['sku'] ?? ''));
+                $sku = $sku !== '' ? $sku : null;
+
+                $data = [
+                    'name' => $name,
+                    'description' => trim((string) ($row['description'] ?? '')) ?: null,
+                    'sku' => $sku,
+                    'category_id' => $categoryId,
+                    'unit_of_measure_id' => $unit->id,
+                    'retail_price' => $retailPrice,
+                    'wholesale_price' => $this->parseDecimal($row['wholesale_price'] ?? null),
+                    'wholesale_min_qty' => $this->parseDecimal($row['wholesale_min_qty'] ?? null),
+                    'cost_price' => $this->parseDecimal($row['cost_price'] ?? null),
+                    'stock' => $this->parseDecimal($row['stock'] ?? null) ?? 0,
+                    'stock_minimo' => $this->parseDecimal($row['stock_minimo'] ?? null) ?? 0,
+                    'is_active' => ! in_array(trim((string) ($row['is_active'] ?? '1')), ['0', 'false', 'no'], true),
+                ];
+
+                if (! $unit->allows_decimal && floor($data['stock']) != $data['stock']) {
+                    throw new \RuntimeException("La unidad \"{$unit->name}\" no admite stock con decimales.");
+                }
+
+                // Upsert por SKU: permite re-subir el mismo archivo para
+                // corregir precios/stock sin duplicar productos.
+                $existing = $sku ? Product::where('sku', $sku)->first() : null;
+
+                if ($existing) {
+                    $existing->update($data);
+                    $results[] = ['row' => $rowNumber, 'name' => $name, 'status' => 'actualizado'];
+                } else {
+                    Product::create($data);
+                    $results[] = ['row' => $rowNumber, 'name' => $name, 'status' => 'creado'];
+                }
+            } catch (\Throwable $e) {
+                $results[] = ['row' => $rowNumber, 'name' => $name !== '' ? $name : '(sin nombre)', 'status' => 'error', 'message' => $e->getMessage()];
+            }
+        }
+
+        return redirect()->route('pos.products.import.form')->with('importResults', $results);
+    }
+
+    /** Lee el CSV subido detectando ; o , como delimitador y quitando el BOM de Excel. */
+    private function parseCsv(string $path): array
+    {
+        $content = file_get_contents($path);
+        $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
+
+        $firstLine = strtok($content, "\n");
+        $delimiter = substr_count($firstLine, ';') > substr_count($firstLine, ',') ? ';' : ',';
+
+        $lines = array_filter(preg_split('/\r\n|\r|\n/', $content), fn ($l) => trim($l) !== '');
+        if (empty($lines)) {
+            return [];
+        }
+
+        $handle = fopen('php://memory', 'r+');
+        foreach ($lines as $line) {
+            fwrite($handle, $line."\n");
+        }
+        rewind($handle);
+
+        $headerRow = fgetcsv($handle, 0, $delimiter) ?: [];
+        $header = array_map(function ($h) {
+            $h = preg_replace('/[^a-z0-9]+/', '_', trim(strtolower($h)));
+
+            return trim($h, '_');
+        }, $headerRow);
+
+        $rows = [];
+        while (($fields = fgetcsv($handle, 0, $delimiter)) !== false) {
+            $len = min(count($header), count($fields));
+            $rows[] = array_combine(array_slice($header, 0, $len), array_slice($fields, 0, $len));
+        }
+        fclose($handle);
+
+        return $rows;
+    }
+
+    private function parseDecimal(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        // Formato latino común en CSVs de Excel/es-GT: "1.234,50" -> "1234.50".
+        if (preg_match('/^-?\d{1,3}(\.\d{3})*(,\d+)?$/', $value)) {
+            $value = str_replace('.', '', $value);
+            $value = str_replace(',', '.', $value);
+        }
+
+        return is_numeric($value) ? $value : null;
+    }
+
+    private function resolveUnitOfMeasure(string $name): ?UnitOfMeasure
+    {
+        if ($name === '') {
+            return null;
+        }
+
+        return UnitOfMeasure::whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->orWhereRaw('LOWER(abbreviation) = ?', [mb_strtolower($name)])
+            ->first();
+    }
+
+    private function resolveOrCreateCategory(string $name, string $businessId): ?string
+    {
+        if ($name === '') {
+            return null;
+        }
+
+        return Category::firstOrCreate(
+            ['business_id' => $businessId, 'name' => $name],
+            ['business_id' => $businessId, 'is_active' => true],
+        )->id;
+    }
+
     private function validated(Request $request, ?string $productId = null): array
     {
         $businessId = Auth::user()->business_id;
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:2000'],
             'sku' => ['nullable', 'string', 'max:64'],
             // `unit_of_measure_id` es un catálogo GLOBAL (sin business_id):
             // Rule::exists sin scope es correcto ahí. `category_id` SÍ es de

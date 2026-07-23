@@ -12,6 +12,7 @@
         'open' => $errors->any(),
         'old' => [
             'name' => old('name', ''),
+            'description' => old('description', ''),
             'sku' => old('sku', ''),
             'category_id' => old('category_id', ''),
             'unit_of_measure_id' => old('unit_of_measure_id', ''),
@@ -32,9 +33,17 @@
             <h1 class="mt-1 text-2xl font-semibold tracking-tight">Productos</h1>
         </div>
         @can('manage-products')
-            <button @click="openCreate()" class="rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-500">
-                Nuevo producto
-            </button>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('pos.products.export') }}" class="rounded-md border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    Exportar
+                </a>
+                <a href="{{ route('pos.products.import.form') }}" class="rounded-md border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    Importar
+                </a>
+                <button @click="openCreate()" class="rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+                    Nuevo producto
+                </button>
+            </div>
         @endcan
     </header>
 
@@ -77,7 +86,7 @@
                             $dot = (float) $p->stock === 0.0 ? 'bg-rose-500' : ($low ? 'bg-amber-400' : 'bg-emerald-500');
                             $txt = (float) $p->stock === 0.0 ? 'text-rose-600' : ($low ? 'text-amber-600' : 'text-slate-600');
                             $editPayload = [
-                                'id' => $p->id, 'name' => $p->name, 'sku' => $p->sku,
+                                'id' => $p->id, 'name' => $p->name, 'description' => $p->description, 'sku' => $p->sku,
                                 'category_id' => $p->category_id, 'unit_of_measure_id' => $p->unit_of_measure_id,
                                 'retail_price' => (string) $p->retail_price,
                                 'wholesale_price' => $p->wholesale_price ? (string) $p->wholesale_price : '',
@@ -169,6 +178,12 @@
                         <input name="name" x-model="form.name" placeholder="Café 250g"
                                class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none">
                         @error('name')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-slate-700">Descripción (opcional)</label>
+                        <textarea name="description" x-model="form.description" rows="2" placeholder="Detalles que le sirvan al cajero al vender…"
+                                  class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"></textarea>
+                        @error('description')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -269,7 +284,7 @@
                 this.mode = 'create';
                 this.editId = null;
                 this.form = {
-                    name: '', sku: '', category_id: '', unit_of_measure_id: '',
+                    name: '', description: '', sku: '', category_id: '', unit_of_measure_id: '',
                     retail_price: '', wholesale_price: '', wholesale_min_qty: '', cost_price: '',
                     stock: '0', stock_minimo: '0',
                 };
@@ -279,7 +294,7 @@
                 this.mode = 'edit';
                 this.editId = p.id;
                 this.form = {
-                    name: p.name, sku: p.sku ?? '', category_id: p.category_id ?? '', unit_of_measure_id: p.unit_of_measure_id ?? '',
+                    name: p.name, description: p.description ?? '', sku: p.sku ?? '', category_id: p.category_id ?? '', unit_of_measure_id: p.unit_of_measure_id ?? '',
                     retail_price: p.retail_price, wholesale_price: p.wholesale_price ?? '', wholesale_min_qty: p.wholesale_min_qty ?? '',
                     cost_price: p.cost_price ?? '', stock: p.stock, stock_minimo: p.stock_minimo,
                 };
